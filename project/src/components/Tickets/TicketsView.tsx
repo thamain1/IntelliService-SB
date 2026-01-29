@@ -160,6 +160,9 @@ export function TicketsView({ initialFilter }: TicketsViewProps = {}) {
         matchesStatus = ticket.hold_parts_active === true;
       } else if (statusFilter === 'hold_issue') {
         matchesStatus = ticket.hold_issue_active === true;
+      } else if (statusFilter === 'in_progress') {
+        // Match dashboard behavior: exclude tickets on hold
+        matchesStatus = ticket.status === 'in_progress' && ticket.hold_active === false;
       } else {
         matchesStatus = ticket.status === statusFilter;
       }
