@@ -1199,6 +1199,36 @@ export function AccountingView({ initialView = 'dashboard' }: AccountingViewProp
                   </button>
                 </div>
               </div>
+            ) : selectedReport === 'general-ledger' ? (
+              <div className="relative group">
+                <button
+                  className="btn btn-primary flex items-center space-x-2"
+                  disabled={glEntries.length === 0}
+                >
+                  <Download className="w-4 h-4" />
+                  <span>Export</span>
+                </button>
+                <div className="absolute right-0 mt-1 w-40 bg-white dark:bg-gray-800 rounded-lg shadow-lg border border-gray-200 dark:border-gray-700 opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all z-10">
+                  <button
+                    onClick={() => exportGLReport('pdf')}
+                    className="w-full px-4 py-2 text-left text-sm hover:bg-gray-100 dark:hover:bg-gray-700 rounded-t-lg"
+                  >
+                    Export as PDF
+                  </button>
+                  <button
+                    onClick={() => exportGLReport('excel')}
+                    className="w-full px-4 py-2 text-left text-sm hover:bg-gray-100 dark:hover:bg-gray-700"
+                  >
+                    Export as Excel
+                  </button>
+                  <button
+                    onClick={() => exportGLReport('csv')}
+                    className="w-full px-4 py-2 text-left text-sm hover:bg-gray-100 dark:hover:bg-gray-700 rounded-b-lg"
+                  >
+                    Export as CSV
+                  </button>
+                </div>
+              </div>
             ) : (
               <button
                 onClick={() => window.print()}
