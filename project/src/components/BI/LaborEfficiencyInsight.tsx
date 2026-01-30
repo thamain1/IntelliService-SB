@@ -41,11 +41,14 @@ export function LaborEfficiencyInsight() {
     try {
       setLoading(true);
 
+      // Use correct column names: clock_in_time, clock_out_time
+      // Time logged with a ticket_id is considered billable
       const { data: timeLogs } = await supabase
         .from('time_logs')
-        .select('*, profiles!time_logs_user_id_fkey(full_name)')
-        .gte('clock_in', start.toISOString())
-        .lte('clock_in', end.toISOString());
+        .select('*, profiles(full_name), tickets(title)')
+        .gte('clock_in_time', start.toISOString())
+        .lte('clock_in_time', end.toISOString())
+        .eq('status', 'completed');
 
       let billableHours = 0;
       let nonBillableHours = 0;
@@ -58,22 +61,26 @@ export function LaborEfficiencyInsight() {
       > = {};
 
       timeLogs?.forEach((log: any) => {
-        if (!log.clock_out) return;
+        if (!log.clock_out_time) return;
 
-        const hours =
-          (new Date(log.clock_out).getTime() - new Date(log.clock_in).getTime()) /
+        // Use total_hours if available, otherwise calculate
+        const hours = log.total_hours ||
+          (new Date(log.clock_out_time).getTime() - new Date(log.clock_in_time).getTime()) /
           (1000 * 60 * 60);
 
-        const isBillable = log.is_billable !== false;
+        // Time logged against a ticket is considered billable
+        const isBillable = !!log.ticket_id;
 
         if (isBillable) {
           billableHours += hours;
-          laborBilled += log.billing_amount || 0;
+          // Estimate labor billed at $95/hr (typical HVAC rate)
+          laborBilled += hours * 95;
         } else {
           nonBillableHours += hours;
         }
 
-        laborCost += log.cost_amount || 0;
+        // Estimate labor cost at $35/hr (typical tech cost)
+        laborCost += hours * 35;
 
         const techId = log.user_id;
         const techName = log.profiles?.full_name || 'Unknown';
