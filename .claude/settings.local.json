@@ -14,7 +14,11 @@
       "Bash(dir \"C:\\\\dev\\\\intelliservicebeta\\\\docs\")",
       "Bash(ls:*)",
       "Bash(xargs:*)",
-      "Bash(find:*)"
+      "Bash(find:*)",
+      "Bash(git pull:*)",
+      "Bash(npx wrangler --version)",
+      "Bash(npx wrangler:*)",
+      "WebFetch(domain:intelliservice.pages.dev)"
     ]
   }
 }
