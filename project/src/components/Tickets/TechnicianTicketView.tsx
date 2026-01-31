@@ -1,5 +1,5 @@
 import { useEffect, useState, useCallback } from 'react';
-import { Camera, Package, MessageSquare, CheckCircle, Clock, AlertTriangle, MapPin, Phone, User, Plus, X, Upload, History, Eye, AlertOctagon, PackageX } from 'lucide-react';
+import { Camera, Package, MessageSquare, CheckCircle, Clock, AlertTriangle, MapPin, Phone, User, Plus, X, Upload, History, Eye, AlertOctagon, PackageX, Navigation } from 'lucide-react';
 import { supabase } from '../../lib/supabase';
 import { useAuth } from '../../contexts/AuthContext';
 import { holdTicketForParts, reportTicketIssue } from '../../services/TicketHoldService';
@@ -103,6 +103,9 @@ export function TechnicianTicketView() {
   const [showUpdateModal, setShowUpdateModal] = useState(false);
   const [showPartsModal, setShowPartsModal] = useState(false);
   const [showPhotoModal, setShowPhotoModal] = useState(false);
+  const [showClockInAlert, setShowClockInAlert] = useState(false);
+  const [isShiftClockedIn, setIsShiftClockedIn] = useState(false);
+  const [showCompletionSuccess, setShowCompletionSuccess] = useState(false);
 
   const [updateFormData, setUpdateFormData] = useState({
     update_type: 'progress_note' as const,
@@ -130,6 +133,7 @@ export function TechnicianTicketView() {
     loadMyTickets();
     loadCompletedTickets();
     checkActiveTimer();
+    checkShiftClockIn();
   }, [profile?.id]);
 
   useEffect(() => {
@@ -137,6 +141,8 @@ export function TechnicianTicketView() {
       console.log('Selected ticket changed, loading details for:', selectedTicket.id);
       loadTicketDetails(selectedTicket.id);
       loadOnSiteProgress(selectedTicket.id);
+      // Re-check shift clock-in status when viewing a ticket
+      checkShiftClockIn();
     } else {
       console.log('No ticket selected');
       setOnSiteProgress(null);
@@ -159,6 +165,27 @@ export function TechnicianTicketView() {
       setActiveTimer(data as ActiveTimer);
     } catch (error) {
       console.error('Error checking active timer:', error);
+    }
+  };
+
+  const checkShiftClockIn = async () => {
+    if (!profile?.id) return;
+    try {
+      // Check if the technician has an active shift clock-in (not a ticket timer)
+      const { data, error } = await supabase
+        .from('time_logs')
+        .select('id')
+        .eq('user_id', profile.id)
+        .eq('status', 'active')
+        .is('clock_out_time', null)
+        .limit(1)
+        .maybeSingle();
+
+      if (error) throw error;
+      setIsShiftClockedIn(!!data);
+    } catch (error) {
+      console.error('Error checking shift clock-in:', error);
+      setIsShiftClockedIn(false);
     }
   };
 
@@ -295,6 +322,12 @@ export function TechnicianTicketView() {
 
   const handleStartWork = async () => {
     if (!selectedTicket || !profile?.id) return;
+
+    // Check if technician has clocked in for their shift
+    if (!isShiftClockedIn) {
+      setShowClockInAlert(true);
+      return;
+    }
 
     if (activeTimer?.has_active_timer && activeTimer.ticket_id !== selectedTicket.id) {
       alert(`You are currently timing Ticket ${activeTimer.ticket_number}. End it first.`);
@@ -435,6 +468,8 @@ export function TechnicianTicketView() {
     e.preventDefault();
     if (!selectedTicket) return;
 
+    const isCompletingTicket = updateFormData.status === 'completed';
+
     try {
       // Get current user ID
       const { data: { user } } = await supabase.auth.getUser();
@@ -445,6 +480,17 @@ export function TechnicianTicketView() {
       console.log('Adding update for ticket:', selectedTicket.id);
       console.log('User ID:', user.id);
       console.log('Update data:', updateFormData);
+
+      // If completing, stop the timer first
+      if (isCompletingTicket && activeTimer?.has_active_timer && activeTimer.ticket_id === selectedTicket.id) {
+        const { error: timerError } = await supabase.rpc('fn_end_ticket_work', {
+          p_tech_id: profile?.id,
+          p_ticket_id: selectedTicket.id,
+        });
+        if (timerError) {
+          console.error('Error stopping timer:', timerError);
+        }
+      }
 
       const updateData: any = {
         ticket_id: selectedTicket.id,
@@ -467,13 +513,20 @@ export function TechnicianTicketView() {
       }
 
       if (updateFormData.status) {
+        const ticketUpdateData: any = {
+          status: updateFormData.status,
+          updated_at: new Date().toISOString(),
+          assigned_to: selectedTicket.assigned_to
+        };
+
+        // Add completed_date if marking as completed
+        if (isCompletingTicket) {
+          ticketUpdateData.completed_date = new Date().toISOString();
+        }
+
         const { error: ticketError } = await supabase
           .from('tickets')
-          .update({
-            status: updateFormData.status,
-            updated_at: new Date().toISOString(),
-            assigned_to: selectedTicket.assigned_to
-          })
+          .update(ticketUpdateData)
           .eq('id', selectedTicket.id);
 
         if (ticketError) {
@@ -482,7 +535,19 @@ export function TechnicianTicketView() {
         }
       }
 
-      // Reload data before closing modal
+      // Close modal first
+      setShowUpdateModal(false);
+
+      // If completing, show success and navigate back
+      if (isCompletingTicket) {
+        await checkActiveTimer();
+        await loadMyTickets();
+        await loadCompletedTickets();
+        setShowCompletionSuccess(true);
+        return;
+      }
+
+      // Reload data for non-completion updates
       await loadTicketDetails(selectedTicket.id);
       await loadMyTickets();
 
@@ -968,6 +1033,17 @@ export function TechnicianTicketView() {
                   </div>
                 </div>
               </div>
+              {selectedTicket.customers.address && (
+                <a
+                  href={`https://www.google.com/maps/dir/?api=1&destination=${encodeURIComponent(selectedTicket.customers.address)}`}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="mt-4 w-full btn btn-primary flex items-center justify-center space-x-2"
+                >
+                  <Navigation className="w-4 h-4" />
+                  <span>Get Directions</span>
+                </a>
+              )}
             </div>
 
             <div className="card p-6">
@@ -989,25 +1065,51 @@ export function TechnicianTicketView() {
                 )}
               </div>
 
-              {!isReadonly && (
+              {(selectedTicket.status === 'completed' || selectedTicket.status === 'closed_billed') && (
+                <div className="p-4 bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800 rounded-lg text-center">
+                  <CheckCircle className="w-8 h-8 text-green-600 dark:text-green-400 mx-auto mb-2" />
+                  <p className="font-medium text-green-800 dark:text-green-200">Ticket Completed</p>
+                  <p className="text-sm text-green-600 dark:text-green-400 mt-1">
+                    This ticket has been marked as complete.
+                  </p>
+                </div>
+              )}
+
+              {!isReadonly && selectedTicket.status !== 'completed' && selectedTicket.status !== 'closed_billed' && (
                 <>
                   <h2 className="text-lg font-bold text-gray-900 dark:text-white mb-4">Quick Actions</h2>
                   <div className="space-y-3">
                     {(selectedTicket.status === 'open' || selectedTicket.status === 'scheduled') && !isCurrentlyTiming && (
-                      <button
-                        onClick={handleStartWork}
-                        disabled={hasAnotherTimerActive || selectedTicket.hold_active}
-                        className={`w-full btn flex items-center justify-center space-x-2 ${
-                          (hasAnotherTimerActive || selectedTicket.hold_active)
-                            ? 'btn-outline opacity-50 cursor-not-allowed'
-                            : 'btn-primary'
-                        }`}
-                      >
-                        <Clock className="w-4 h-4" />
-                        <span>
-                          {selectedTicket.hold_active ? 'On Hold - Cannot Start' : 'Start Work (Begin Timer)'}
-                        </span>
-                      </button>
+                      <>
+                        {!isShiftClockedIn && (
+                          <div className="mb-3 p-3 bg-yellow-50 dark:bg-yellow-900/20 border border-yellow-200 dark:border-yellow-800 rounded-lg">
+                            <div className="flex items-center space-x-2 text-yellow-700 dark:text-yellow-400">
+                              <AlertTriangle className="w-4 h-4 flex-shrink-0" />
+                              <span className="text-sm">You must clock in before starting work</span>
+                            </div>
+                          </div>
+                        )}
+                        <button
+                          onClick={handleStartWork}
+                          disabled={hasAnotherTimerActive || selectedTicket.hold_active}
+                          className={`w-full btn flex items-center justify-center space-x-2 ${
+                            (hasAnotherTimerActive || selectedTicket.hold_active)
+                              ? 'btn-outline opacity-50 cursor-not-allowed'
+                              : !isShiftClockedIn
+                                ? 'btn-outline border-yellow-500 text-yellow-700 hover:bg-yellow-50 dark:border-yellow-600 dark:text-yellow-400 dark:hover:bg-yellow-900/20'
+                                : 'btn-primary'
+                          }`}
+                        >
+                          <Clock className="w-4 h-4" />
+                          <span>
+                            {selectedTicket.hold_active
+                              ? 'On Hold - Cannot Start'
+                              : !isShiftClockedIn
+                                ? 'Clock In Required to Start'
+                                : 'Start Work (Begin Timer)'}
+                          </span>
+                        </button>
+                      </>
                     )}
                     {isCurrentlyTiming && (
                       <div className="p-3 bg-green-50 dark:bg-green-900/20 rounded-lg border border-green-200 dark:border-green-800">
@@ -1051,11 +1153,8 @@ export function TechnicianTicketView() {
                       <span>{selectedTicket.hold_issue_active ? 'On Hold - Issue' : 'Report Issue'}</span>
                     </button>
                     <button
-                      onClick={async () => {
-                        if (isCurrentlyTiming) {
-                          await handleEndWork(true);
-                        }
-                        setUpdateFormData({ ...updateFormData, update_type: 'completed', status: 'completed' });
+                      onClick={() => {
+                        setUpdateFormData({ ...updateFormData, update_type: 'completed', status: 'completed', progress_percent: 100 });
                         setShowUpdateModal(true);
                       }}
                       className="w-full btn btn-primary flex items-center justify-center space-x-2"
@@ -1318,6 +1417,61 @@ export function TechnicianTicketView() {
                   </button>
                 </div>
               </form>
+            </div>
+          </div>
+        )}
+
+        {showClockInAlert && (
+          <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+            <div className="bg-white dark:bg-gray-800 rounded-xl shadow-2xl max-w-md w-full">
+              <div className="p-6 text-center">
+                <div className="w-16 h-16 bg-yellow-100 dark:bg-yellow-900/30 rounded-full flex items-center justify-center mx-auto mb-4">
+                  <AlertTriangle className="w-8 h-8 text-yellow-600 dark:text-yellow-400" />
+                </div>
+                <h2 className="text-xl font-bold text-gray-900 dark:text-white mb-2">
+                  Clock In Required
+                </h2>
+                <p className="text-gray-600 dark:text-gray-400 mb-6">
+                  You must clock in before starting work on a ticket. Please go to <strong>Time Clock</strong> to clock in for your shift, then return here to start work.
+                </p>
+                <button
+                  onClick={() => setShowClockInAlert(false)}
+                  className="btn btn-primary w-full"
+                >
+                  Got It
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {showCompletionSuccess && (
+          <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+            <div className="bg-white dark:bg-gray-800 rounded-xl shadow-2xl max-w-md w-full">
+              <div className="p-6 text-center">
+                <div className="w-16 h-16 bg-green-100 dark:bg-green-900/30 rounded-full flex items-center justify-center mx-auto mb-4">
+                  <CheckCircle className="w-8 h-8 text-green-600 dark:text-green-400" />
+                </div>
+                <h2 className="text-xl font-bold text-gray-900 dark:text-white mb-2">
+                  Ticket Completed!
+                </h2>
+                <p className="text-gray-600 dark:text-gray-400 mb-2">
+                  <strong>{selectedTicket?.ticket_number}</strong> has been marked as complete.
+                </p>
+                <p className="text-sm text-gray-500 dark:text-gray-500 mb-6">
+                  You can view it in your Service History.
+                </p>
+                <button
+                  onClick={() => {
+                    setShowCompletionSuccess(false);
+                    setSelectedTicket(null);
+                    setViewMode('edit');
+                  }}
+                  className="btn btn-primary w-full"
+                >
+                  Back to My Tickets
+                </button>
+              </div>
             </div>
           </div>
         )}
