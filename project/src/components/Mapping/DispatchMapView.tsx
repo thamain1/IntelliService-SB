@@ -325,7 +325,7 @@ export function DispatchMapView() {
           showTechnicians={showTechnicians}
           onTechnicianClick={handleTechnicianClick}
           selectedTechnicianId={selectedTechId}
-          height="350px"
+          height="500px"
         />
       </div>
 
