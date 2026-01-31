@@ -476,7 +476,7 @@ export function PartsView({ itemType = 'part' }: PartsViewProps) {
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
                   Location
                 </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider sticky right-0 bg-gray-50 dark:bg-gray-700 shadow-[-4px_0_6px_-2px_rgba(0,0,0,0.1)]">
                   Actions
                 </th>
               </tr>
@@ -561,11 +561,11 @@ export function PartsView({ itemType = 'part' }: PartsViewProps) {
                           </span>
                         )}
                       </td>
-                      <td className="px-6 py-4">
+                      <td className="px-6 py-4 sticky right-0 bg-white dark:bg-gray-800 shadow-[-4px_0_6px_-2px_rgba(0,0,0,0.1)]">
                         <div className="flex items-center space-x-2">
                           <button
                             onClick={() => openEditModal(part)}
-                            className="btn btn-outline p-2 flex items-center space-x-1"
+                            className="btn btn-primary p-2 flex items-center space-x-1"
                             title="Edit part details"
                           >
                             <Edit2 className="w-4 h-4" />
