@@ -106,6 +106,15 @@ export function TechnicianTicketView() {
   const [showClockInAlert, setShowClockInAlert] = useState(false);
   const [isShiftClockedIn, setIsShiftClockedIn] = useState(false);
   const [showCompletionSuccess, setShowCompletionSuccess] = useState(false);
+  const [showNeedPartsModal, setShowNeedPartsModal] = useState(false);
+  const [allParts, setAllParts] = useState<Part[]>([]);
+  const [needPartsFormData, setNeedPartsFormData] = useState({
+    part_id: '',
+    quantity: 1,
+    urgency: 'medium' as 'low' | 'medium' | 'high' | 'critical',
+    notes: '',
+  });
+  const [needPartsLoading, setNeedPartsLoading] = useState(false);
 
   const [updateFormData, setUpdateFormData] = useState({
     update_type: 'progress_note' as const,
@@ -286,16 +295,12 @@ export function TechnicianTicketView() {
       const { data: truckParts, error: truckError } = await supabase
         .from('vw_technician_truck_inventory')
         .select('part_id, part_number, part_name, unit_price, qty_on_hand')
-        .eq('technician_id', profile.id);
+        .eq('technician_id', profile.id)
+        .gt('qty_on_hand', 0);
 
       if (truckError) {
-        console.log('No truck inventory view available, falling back to all parts');
-        const { data: allParts, error: allPartsError } = await supabase
-          .from('parts')
-          .select('id, part_number, name, unit_price')
-          .order('name', { ascending: true });
-        if (allPartsError) throw allPartsError;
-        setAvailableParts(allParts || []);
+        console.log('No truck inventory view available');
+        setAvailableParts([]);
         return;
       }
 
@@ -308,15 +313,28 @@ export function TechnicianTicketView() {
         }));
         setAvailableParts(mappedParts);
       } else {
-        const { data: allParts, error: allPartsError } = await supabase
-          .from('parts')
-          .select('id, part_number, name, unit_price')
-          .order('name', { ascending: true });
-        if (allPartsError) throw allPartsError;
-        setAvailableParts(allParts || []);
+        // No parts on truck - don't fall back to all parts
+        setAvailableParts([]);
       }
     } catch (error) {
       console.error('Error loading truck inventory:', error);
+      setAvailableParts([]);
+    }
+  };
+
+  const loadAllParts = async () => {
+    try {
+      const { data, error } = await supabase
+        .from('parts')
+        .select('id, part_number, name, unit_price')
+        .eq('item_type', 'part')
+        .order('name', { ascending: true });
+
+      if (error) throw error;
+      setAllParts(data || []);
+    } catch (error) {
+      console.error('Error loading all parts:', error);
+      setAllParts([]);
     }
   };
 
@@ -399,23 +417,42 @@ export function TechnicianTicketView() {
 
   const handleNeedParts = async () => {
     if (!selectedTicket) return;
+    // Load all parts for selection and show modal
+    await loadAllParts();
+    setNeedPartsFormData({
+      part_id: '',
+      quantity: 1,
+      urgency: 'medium',
+      notes: '',
+    });
+    setShowNeedPartsModal(true);
+  };
 
-    const notes = prompt('Please describe the parts needed:');
-    if (!notes) return;
+  const handleSubmitNeedParts = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!selectedTicket) return;
 
-    const urgencyInput = prompt('Urgency (low/medium/high/critical):', 'medium');
-    const urgency = (urgencyInput?.toLowerCase() || 'medium') as 'low' | 'medium' | 'high' | 'critical';
+    setNeedPartsLoading(true);
 
     try {
+      const partsToRequest = needPartsFormData.part_id
+        ? [{
+            part_id: needPartsFormData.part_id,
+            quantity: needPartsFormData.quantity,
+            notes: needPartsFormData.notes,
+          }]
+        : [];
+
       const result = await holdTicketForParts({
         ticketId: selectedTicket.id,
-        urgency,
-        notes,
+        urgency: needPartsFormData.urgency,
+        notes: needPartsFormData.notes || 'Parts requested',
         summary: 'Waiting for parts',
-        parts: [], // Parts list can be added later
+        parts: partsToRequest,
       });
 
       if (result.success) {
+        setShowNeedPartsModal(false);
         alert('Ticket placed on hold for parts. Timer has been stopped.');
         await loadTicketDetails(selectedTicket.id);
         await loadMyTickets();
@@ -426,6 +463,8 @@ export function TechnicianTicketView() {
     } catch (error) {
       console.error('Error holding ticket for parts:', error);
       alert('Failed to hold ticket for parts: ' + (error as Error).message);
+    } finally {
+      setNeedPartsLoading(false);
     }
   };
 
@@ -1266,63 +1305,85 @@ export function TechnicianTicketView() {
                 </button>
               </div>
 
-              <form onSubmit={handleAddPart} className="p-6 space-y-4">
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-                    Part *
-                  </label>
-                  <select
-                    required
-                    value={partsFormData.part_id}
-                    onChange={(e) => setPartsFormData({ ...partsFormData, part_id: e.target.value })}
-                    className="input"
+              {availableParts.length === 0 ? (
+                <div className="p-6 text-center">
+                  <Package className="w-12 h-12 text-gray-400 mx-auto mb-4" />
+                  <h3 className="text-lg font-medium text-gray-900 dark:text-white mb-2">
+                    No Parts on Truck
+                  </h3>
+                  <p className="text-gray-600 dark:text-gray-400 mb-4">
+                    Your truck inventory is empty. If you need a part, use the "Need Parts" button to request it from dispatch.
+                  </p>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setShowPartsModal(false);
+                      handleNeedParts();
+                    }}
+                    className="btn btn-primary"
                   >
-                    <option value="">Select Part</option>
-                    {availableParts.map((part) => (
-                      <option key={part.id} value={part.id}>
-                        {part.part_number} - {part.name} (${part.unit_price})
-                      </option>
-                    ))}
-                  </select>
-                </div>
-
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-                    Quantity *
-                  </label>
-                  <input
-                    type="number"
-                    required
-                    min="0.01"
-                    step="0.01"
-                    value={partsFormData.quantity}
-                    onChange={(e) => setPartsFormData({ ...partsFormData, quantity: parseFloat(e.target.value) || 1 })}
-                    className="input"
-                  />
-                </div>
-
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-                    Notes
-                  </label>
-                  <textarea
-                    value={partsFormData.notes}
-                    onChange={(e) => setPartsFormData({ ...partsFormData, notes: e.target.value })}
-                    className="input"
-                    rows={2}
-                    placeholder="Installation notes..."
-                  />
-                </div>
-
-                <div className="flex space-x-3 pt-4">
-                  <button type="button" onClick={() => setShowPartsModal(false)} className="btn btn-outline flex-1">
-                    Cancel
-                  </button>
-                  <button type="submit" className="btn btn-primary flex-1">
-                    Add Part
+                    Request Parts
                   </button>
                 </div>
-              </form>
+              ) : (
+                <form onSubmit={handleAddPart} className="p-6 space-y-4">
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                      Part from Truck Inventory *
+                    </label>
+                    <select
+                      required
+                      value={partsFormData.part_id}
+                      onChange={(e) => setPartsFormData({ ...partsFormData, part_id: e.target.value })}
+                      className="input"
+                    >
+                      <option value="">Select Part</option>
+                      {availableParts.map((part) => (
+                        <option key={part.id} value={part.id}>
+                          {part.part_number} - {part.name} (${part.unit_price})
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                      Quantity *
+                    </label>
+                    <input
+                      type="number"
+                      required
+                      min="0.01"
+                      step="0.01"
+                      value={partsFormData.quantity}
+                      onChange={(e) => setPartsFormData({ ...partsFormData, quantity: parseFloat(e.target.value) || 1 })}
+                      className="input"
+                    />
+                  </div>
+
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                      Notes
+                    </label>
+                    <textarea
+                      value={partsFormData.notes}
+                      onChange={(e) => setPartsFormData({ ...partsFormData, notes: e.target.value })}
+                      className="input"
+                      rows={2}
+                      placeholder="Installation notes..."
+                    />
+                  </div>
+
+                  <div className="flex space-x-3 pt-4">
+                    <button type="button" onClick={() => setShowPartsModal(false)} className="btn btn-outline flex-1">
+                      Cancel
+                    </button>
+                    <button type="submit" className="btn btn-primary flex-1">
+                      Add Part
+                    </button>
+                  </div>
+                </form>
+              )}
             </div>
           </div>
         )}
@@ -1414,6 +1475,110 @@ export function TechnicianTicketView() {
                     disabled={uploadingPhoto || !selectedFile}
                   >
                     {uploadingPhoto ? 'Uploading...' : 'Upload Photo'}
+                  </button>
+                </div>
+              </form>
+            </div>
+          </div>
+        )}
+
+        {showNeedPartsModal && (
+          <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+            <div className="bg-white dark:bg-gray-800 rounded-xl shadow-2xl max-w-lg w-full">
+              <div className="flex items-center justify-between p-6 border-b border-gray-200 dark:border-gray-700">
+                <h2 className="text-xl font-bold text-gray-900 dark:text-white">Request Parts</h2>
+                <button onClick={() => setShowNeedPartsModal(false)} className="text-gray-400 hover:text-gray-600">
+                  <X className="w-6 h-6" />
+                </button>
+              </div>
+
+              <form onSubmit={handleSubmitNeedParts} className="p-6 space-y-4">
+                <div className="p-3 bg-yellow-50 dark:bg-yellow-900/20 border border-yellow-200 dark:border-yellow-800 rounded-lg">
+                  <div className="flex items-start space-x-2">
+                    <AlertTriangle className="w-5 h-5 text-yellow-600 dark:text-yellow-400 flex-shrink-0 mt-0.5" />
+                    <p className="text-sm text-yellow-800 dark:text-yellow-200">
+                      This will put the ticket <strong>on hold</strong> and stop the timer until parts are available.
+                    </p>
+                  </div>
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                    Part Needed (optional)
+                  </label>
+                  <select
+                    value={needPartsFormData.part_id}
+                    onChange={(e) => setNeedPartsFormData({ ...needPartsFormData, part_id: e.target.value })}
+                    className="input"
+                  >
+                    <option value="">-- Select specific part or describe below --</option>
+                    {allParts.map((part) => (
+                      <option key={part.id} value={part.id}>
+                        {part.part_number} - {part.name}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                    Quantity
+                  </label>
+                  <input
+                    type="number"
+                    min="1"
+                    value={needPartsFormData.quantity}
+                    onChange={(e) => setNeedPartsFormData({ ...needPartsFormData, quantity: parseInt(e.target.value) || 1 })}
+                    className="input"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                    Urgency *
+                  </label>
+                  <select
+                    required
+                    value={needPartsFormData.urgency}
+                    onChange={(e) => setNeedPartsFormData({ ...needPartsFormData, urgency: e.target.value as any })}
+                    className="input"
+                  >
+                    <option value="low">Low - Can wait a few days</option>
+                    <option value="medium">Medium - Need within 1-2 days</option>
+                    <option value="high">High - Need today</option>
+                    <option value="critical">Critical - Job cannot continue</option>
+                  </select>
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                    Description / Notes *
+                  </label>
+                  <textarea
+                    required
+                    value={needPartsFormData.notes}
+                    onChange={(e) => setNeedPartsFormData({ ...needPartsFormData, notes: e.target.value })}
+                    className="input"
+                    rows={3}
+                    placeholder="Describe what parts you need and why..."
+                  />
+                </div>
+
+                <div className="flex space-x-3 pt-4">
+                  <button
+                    type="button"
+                    onClick={() => setShowNeedPartsModal(false)}
+                    className="btn btn-outline flex-1"
+                    disabled={needPartsLoading}
+                  >
+                    Cancel
+                  </button>
+                  <button
+                    type="submit"
+                    className="btn btn-primary flex-1"
+                    disabled={needPartsLoading}
+                  >
+                    {needPartsLoading ? 'Submitting...' : 'Request Parts & Hold Ticket'}
                   </button>
                 </div>
               </form>
