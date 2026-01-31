@@ -66,10 +66,12 @@ export function LaborEfficiencyInsight() {
         { name: string; billable: number; nonBillable: number }
       > = {};
 
-      // Filter to only include technicians
+      // Filter to only include technicians (case-insensitive)
       const technicianLogs = timeLogs?.filter((log: any) =>
-        log.profiles?.role === 'technician'
+        log.profiles?.role?.toLowerCase() === 'technician'
       ) || [];
+
+      console.log('[LaborEfficiency] Total logs:', timeLogs?.length, 'Roles found:', [...new Set(timeLogs?.map((l: any) => l.profiles?.role))]);
 
       technicianLogs.forEach((log: any) => {
         if (!log.clock_out_time) return;
