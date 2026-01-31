@@ -21,6 +21,7 @@ import {
   Settings,
   Upload,
   Zap,
+  Phone,
 } from 'lucide-react';
 
 interface Section {
@@ -723,6 +724,28 @@ export function HelpView() {
               onChange={(e) => setSearchQuery(e.target.value)}
               className="w-full pl-10 pr-4 py-3 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 focus:border-transparent"
             />
+          </div>
+
+          {/* Escalations & Support Contact */}
+          <div className="mt-6 bg-gradient-to-r from-blue-600 to-blue-700 rounded-lg p-4 shadow-lg">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-3">
+                <div className="p-2 bg-white/20 rounded-lg">
+                  <Phone className="w-5 h-5 text-white" />
+                </div>
+                <div>
+                  <h3 className="text-white font-semibold">Escalations & Support</h3>
+                  <p className="text-blue-100 text-sm">Jesse Morgan - Available for urgent issues</p>
+                </div>
+              </div>
+              <a
+                href="tel:+13146236782"
+                className="flex items-center gap-2 px-4 py-2 bg-white text-blue-600 font-semibold rounded-lg hover:bg-blue-50 transition-colors"
+              >
+                <Phone className="w-4 h-4" />
+                <span>(314) 623-6782</span>
+              </a>
+            </div>
           </div>
         </div>
 
