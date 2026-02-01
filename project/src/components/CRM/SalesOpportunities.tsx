@@ -11,8 +11,10 @@ import {
   Search,
   Filter,
   Clock,
+  Plus,
 } from 'lucide-react';
 import { CRMService } from '../../services/CRMService';
+import { NewEstimateModal } from '../Estimates/NewEstimateModal';
 
 interface SalesOpportunity {
   ticket_id: string;
@@ -44,6 +46,8 @@ export function SalesOpportunities({ onRefresh }: SalesOpportunitiesProps) {
   const [opportunities, setOpportunities] = useState<SalesOpportunity[]>([]);
   const [searchTerm, setSearchTerm] = useState('');
   const [filterAge, setFilterAge] = useState<string>('all');
+  const [showEstimateModal, setShowEstimateModal] = useState(false);
+  const [selectedOpportunity, setSelectedOpportunity] = useState<SalesOpportunity | null>(null);
 
   useEffect(() => {
     loadOpportunities();
@@ -59,6 +63,24 @@ export function SalesOpportunities({ onRefresh }: SalesOpportunitiesProps) {
     } finally {
       setLoading(false);
     }
+  };
+
+  const handleCreateEstimate = (opp: SalesOpportunity) => {
+    setSelectedOpportunity(opp);
+    setShowEstimateModal(true);
+  };
+
+  const handleEstimateSuccess = (estimateData: {
+    estimateId: string;
+    estimateNumber: string;
+    customerId: string;
+    customerEmail: string | null;
+    customerPhone: string | null;
+  }) => {
+    setShowEstimateModal(false);
+    setSelectedOpportunity(null);
+    alert(`Estimate ${estimateData.estimateNumber} created successfully!`);
+    if (onRefresh) onRefresh();
   };
 
   const filteredOpportunities = opportunities.filter((opp) => {
@@ -202,15 +224,28 @@ export function SalesOpportunities({ onRefresh }: SalesOpportunitiesProps) {
                   </div>
                 </div>
 
-                <button className="btn btn-primary btn-sm flex items-center gap-1">
+                <button
+                  onClick={() => handleCreateEstimate(opp)}
+                  className="btn btn-primary btn-sm flex items-center gap-1"
+                >
+                  <Plus className="w-4 h-4" />
                   Create Estimate
-                  <ChevronRight className="w-4 h-4" />
                 </button>
               </div>
             </div>
           ))}
         </div>
       )}
+
+      {/* New Estimate Modal */}
+      <NewEstimateModal
+        isOpen={showEstimateModal}
+        onClose={() => {
+          setShowEstimateModal(false);
+          setSelectedOpportunity(null);
+        }}
+        onSuccess={handleEstimateSuccess}
+      />
     </div>
   );
 }
