@@ -394,7 +394,7 @@ export function BillDetailModal({
                       <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase w-32">
                         Account
                       </th>
-                      <th className="px-4 py-2 text-right text-xs font-medium text-gray-500 uppercase w-20">
+                      <th className="px-4 py-2 text-right text-xs font-medium text-gray-500 uppercase w-24">
                         Qty
                       </th>
                       <th className="px-4 py-2 text-right text-xs font-medium text-gray-500 uppercase w-28">
