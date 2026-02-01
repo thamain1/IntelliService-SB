@@ -466,10 +466,13 @@ export class CRMService {
     postal_code?: string;
     lead_source?: string;
   }): Promise<any> {
+    // Map postal_code to zip_code for database
+    const { postal_code, ...rest } = input;
     const { data, error } = await supabase
       .from('customers')
       .insert({
-        ...input,
+        ...rest,
+        zip_code: postal_code,
         status: 'lead'
       })
       .select()
