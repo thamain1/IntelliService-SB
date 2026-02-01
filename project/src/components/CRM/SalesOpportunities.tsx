@@ -245,6 +245,16 @@ export function SalesOpportunities({ onRefresh }: SalesOpportunitiesProps) {
           setSelectedOpportunity(null);
         }}
         onSuccess={handleEstimateSuccess}
+        initialCustomerId={selectedOpportunity?.customer_id}
+        initialJobTitle={selectedOpportunity ? `Follow-up: ${selectedOpportunity.title}` : undefined}
+        initialJobDescription={selectedOpportunity ?
+          `Sales opportunity from ticket ${selectedOpportunity.ticket_number}\n` +
+          `Problem: ${selectedOpportunity.problem_label || selectedOpportunity.problem_code || 'N/A'}\n` +
+          `Resolution: ${selectedOpportunity.resolution_label || selectedOpportunity.resolution_code || 'N/A'}\n` +
+          `Equipment: ${selectedOpportunity.equipment_manufacturer || ''} ${selectedOpportunity.equipment_model || ''}` +
+          (selectedOpportunity.equipment_age_years ? ` (${selectedOpportunity.equipment_age_years} years old)` : '')
+          : undefined
+        }
       />
     </div>
   );

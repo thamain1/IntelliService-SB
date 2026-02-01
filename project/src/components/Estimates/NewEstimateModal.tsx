@@ -19,6 +19,9 @@ interface NewEstimateModalProps {
     customerEmail: string | null;
     customerPhone: string | null;
   }) => void;
+  initialCustomerId?: string;
+  initialJobTitle?: string;
+  initialJobDescription?: string;
 }
 
 type LaborRate = {
@@ -38,7 +41,14 @@ type LineItem = {
   equipment_id?: string;
 };
 
-export function NewEstimateModal({ isOpen, onClose, onSuccess }: NewEstimateModalProps) {
+export function NewEstimateModal({
+  isOpen,
+  onClose,
+  onSuccess,
+  initialCustomerId,
+  initialJobTitle,
+  initialJobDescription,
+}: NewEstimateModalProps) {
   const { profile } = useAuth();
   const [loading, setLoading] = useState(false);
   const [customers, setCustomers] = useState<Customer[]>([]);
@@ -72,8 +82,17 @@ export function NewEstimateModal({ isOpen, onClose, onSuccess }: NewEstimateModa
   useEffect(() => {
     if (isOpen) {
       loadData();
+      // Pre-fill form with initial values if provided
+      if (initialCustomerId || initialJobTitle || initialJobDescription) {
+        setFormData(prev => ({
+          ...prev,
+          customer_id: initialCustomerId || prev.customer_id,
+          job_title: initialJobTitle || prev.job_title,
+          job_description: initialJobDescription || prev.job_description,
+        }));
+      }
     }
-  }, [isOpen]);
+  }, [isOpen, initialCustomerId, initialJobTitle, initialJobDescription]);
 
   const loadData = async () => {
     try {
