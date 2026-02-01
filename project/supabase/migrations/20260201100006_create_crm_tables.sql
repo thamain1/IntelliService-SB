@@ -206,7 +206,7 @@ SELECT
     c.name as customer_name,
     'estimate' as event_type,
     e.id as event_id,
-    e.status as event_subtype,
+    e.status::text as event_subtype,
     e.job_title as event_title,
     e.job_description as event_description,
     e.created_at as event_date,
