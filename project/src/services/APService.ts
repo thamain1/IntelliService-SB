@@ -44,7 +44,7 @@ export interface BillLineItem {
   sort_order?: number;
   gl_account?: {
     id: string;
-    account_number: string;
+    account_code: string;
     account_name: string;
   };
 }
@@ -227,7 +227,7 @@ export class APService {
       .from('bill_line_items')
       .select(`
         *,
-        gl_account:chart_of_accounts(id, account_number, account_name)
+        gl_account:chart_of_accounts(id, account_code, account_name)
       `)
       .eq('bill_id', billId)
       .order('sort_order');

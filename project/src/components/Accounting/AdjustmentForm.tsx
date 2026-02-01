@@ -12,7 +12,7 @@ interface AdjustmentFormProps {
 
 interface Account {
   id: string;
-  account_number: string;
+  account_code: string;
   account_name: string;
   account_type: string;
 }
@@ -73,9 +73,9 @@ export function AdjustmentForm({
     try {
       const { data, error } = await supabase
         .from('chart_of_accounts')
-        .select('id, account_number, account_name, account_type')
+        .select('id, account_code, account_name, account_type')
         .eq('is_active', true)
-        .order('account_number');
+        .order('account_code');
 
       if (error) throw error;
       setAccounts(data || []);
@@ -268,7 +268,7 @@ export function AdjustmentForm({
                 <optgroup key={type} label={type.charAt(0).toUpperCase() + type.slice(1)}>
                   {groupedAccounts[type].map((account) => (
                     <option key={account.id} value={account.id}>
-                      {account.account_number} - {account.account_name}
+                      {account.account_code} - {account.account_name}
                     </option>
                   ))}
                 </optgroup>
@@ -293,7 +293,7 @@ export function AdjustmentForm({
                 <optgroup key={type} label={type.charAt(0).toUpperCase() + type.slice(1)}>
                   {groupedAccounts[type].map((account) => (
                     <option key={account.id} value={account.id}>
-                      {account.account_number} - {account.account_name}
+                      {account.account_code} - {account.account_name}
                     </option>
                   ))}
                 </optgroup>
