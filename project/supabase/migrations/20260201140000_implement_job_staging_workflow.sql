@@ -26,17 +26,15 @@
 -- =====================================================
 
 -- Insert Job Staging location if it doesn't exist
-INSERT INTO stock_locations (id, name, location_type, is_active, description)
+INSERT INTO stock_locations (id, name, location_type, is_active)
 VALUES (
   'a0000000-0000-0000-0000-000000000001',
   'Job Staging - Parts Ready',
   'staging',
-  true,
-  'Virtual staging area for parts received and reserved for specific tickets. Parts are transferred to technician trucks upon pickup.'
+  true
 )
 ON CONFLICT (id) DO UPDATE SET
   name = EXCLUDED.name,
-  description = EXCLUDED.description,
   is_active = true;
 
 -- =====================================================
