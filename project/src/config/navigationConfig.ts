@@ -145,6 +145,12 @@ export const navigationConfig: NavigationGroup[] = [
             icon: PackageCheck,
             roles: ['admin', 'dispatcher'],
           },
+          {
+            id: 'parts-pickup',
+            label: 'Parts Pickup',
+            icon: PackageCheck,
+            roles: ['admin', 'dispatcher', 'technician'],
+          },
         ],
       },
       {

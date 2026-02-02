@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { Package, Truck, ShoppingCart, Hash, Shield, MapPin, ArrowRightLeft, PackageCheck, Wrench, ClipboardList } from 'lucide-react';
+import { Package, Truck, ShoppingCart, Hash, Shield, MapPin, ArrowRightLeft, PackageCheck, Wrench, ClipboardList, PackagePlus } from 'lucide-react';
 import { PartsView } from './PartsView';
 import { VendorsView } from './VendorsView';
 import { PurchaseOrdersView } from './PurchaseOrdersView';
@@ -9,8 +9,9 @@ import { WarrantyDashboard } from './WarrantyDashboard';
 import { PartsTransferView } from './PartsTransferView';
 import { PartsReceivingView } from './PartsReceivingView';
 import { PartsRequestQueue } from './PartsRequestQueue';
+import { PartsPickupView } from './PartsPickupView';
 
-type TabType = 'catalog' | 'vendors' | 'orders' | 'serialized' | 'locations' | 'warranty' | 'transfers' | 'receiving' | 'requests';
+type TabType = 'catalog' | 'vendors' | 'orders' | 'serialized' | 'locations' | 'warranty' | 'transfers' | 'receiving' | 'requests' | 'pickup';
 type ItemType = 'part' | 'tool';
 
 interface PartsManagementViewProps {
@@ -41,6 +42,8 @@ export function PartsManagementView({ initialView, itemType = 'part' }: PartsMan
         return 'receiving';
       case 'parts-requests':
         return 'requests';
+      case 'parts-pickup':
+        return 'pickup';
       default:
         return 'catalog';
     }
@@ -62,6 +65,7 @@ export function PartsManagementView({ initialView, itemType = 'part' }: PartsMan
   const tabs: Array<{ id: TabType; label: string; icon: typeof Package }> = [
     { id: 'catalog', label: `${itemLabelPlural} Catalog`, icon: ItemIcon },
     { id: 'requests', label: 'Parts Requests', icon: ClipboardList },
+    { id: 'pickup', label: 'Parts Pickup', icon: PackagePlus },
     { id: 'vendors', label: 'Vendors', icon: Truck },
     { id: 'orders', label: 'Purchase Orders', icon: ShoppingCart },
     { id: 'serialized', label: 'Serialized Inventory', icon: Hash },
@@ -83,7 +87,7 @@ export function PartsManagementView({ initialView, itemType = 'part' }: PartsMan
       </div>
 
       <div className="card p-1">
-        <div className="grid grid-cols-2 md:grid-cols-9 gap-1">
+        <div className="grid grid-cols-2 md:grid-cols-10 gap-1">
           {tabs.map((tab) => {
             const Icon = tab.icon;
             return (
@@ -107,6 +111,7 @@ export function PartsManagementView({ initialView, itemType = 'part' }: PartsMan
       <div className="mt-6">
         {activeTab === 'catalog' && <PartsView itemType={itemType} />}
         {activeTab === 'requests' && <PartsRequestQueue onCreatePO={handleCreatePOFromRequest} />}
+        {activeTab === 'pickup' && <PartsPickupView />}
         {activeTab === 'vendors' && <VendorsView />}
         {activeTab === 'orders' && (
           <PurchaseOrdersView

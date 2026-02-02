@@ -434,33 +434,70 @@ export function HelpView() {
                 <div className="flex-shrink-0 w-8 h-8 bg-blue-600 text-white rounded-full flex items-center justify-center font-bold">3</div>
                 <div>
                   <h4 className="font-medium text-gray-900 dark:text-white flex items-center gap-2">
-                    <PackageCheck className="w-4 h-4" /> Warehouse Receives Parts
+                    <PackageCheck className="w-4 h-4" /> Warehouse Receives to Job Staging
                   </h4>
                   <p className="text-sm text-gray-600 dark:text-gray-300 mt-1">
-                    When receiving the PO, the system shows which parts are linked to waiting tickets.
-                    Upon completing receiving, the system <span className="font-medium">automatically</span>:
+                    When receiving the PO, parts are placed in <span className="font-medium">Job Staging</span> (not directly to a truck).
+                    Parts are <span className="font-medium">reserved</span> for the specific ticket but not yet assigned to a technician.
                   </p>
                   <ul className="list-disc list-inside text-sm text-gray-600 dark:text-gray-300 mt-2 ml-4">
-                    <li>Removes the hold from the ticket</li>
-                    <li>Changes ticket status to "Scheduled" (ready for dispatch)</li>
-                    <li>Adds a ticket update noting parts are ready</li>
+                    <li>Parts remain in staging until technician pickup</li>
+                    <li>Ticket status changes to "Parts Ready"</li>
+                    <li>A Pick List is automatically generated</li>
+                    <li>If technician assignment changes, parts automatically follow the new assignment</li>
                   </ul>
                 </div>
               </div>
 
               {/* Step 4 */}
               <div className="flex gap-4 p-4 bg-gray-50 dark:bg-gray-800 rounded-lg">
-                <div className="flex-shrink-0 w-8 h-8 bg-green-600 text-white rounded-full flex items-center justify-center font-bold">4</div>
+                <div className="flex-shrink-0 w-8 h-8 bg-blue-600 text-white rounded-full flex items-center justify-center font-bold">4</div>
+                <div>
+                  <h4 className="font-medium text-gray-900 dark:text-white flex items-center gap-2">
+                    <Package className="w-4 h-4" /> Technician Picks Up Parts
+                  </h4>
+                  <p className="text-sm text-gray-600 dark:text-gray-300 mt-1">
+                    Go to <span className="font-medium">Parts Management → Parts Pickup</span>. The technician sees their assigned pickups.
+                    Click <span className="font-medium">"Pickup Parts"</span> to transfer parts from Job Staging to their truck inventory.
+                  </p>
+                  <ul className="list-disc list-inside text-sm text-gray-600 dark:text-gray-300 mt-2 ml-4">
+                    <li>Parts are transferred to the tech's assigned truck</li>
+                    <li>Ticket hold is removed</li>
+                    <li>Ticket is ready for dispatch/completion</li>
+                    <li>Chain of custody is documented</li>
+                  </ul>
+                </div>
+              </div>
+
+              {/* Step 5 */}
+              <div className="flex gap-4 p-4 bg-gray-50 dark:bg-gray-800 rounded-lg">
+                <div className="flex-shrink-0 w-8 h-8 bg-green-600 text-white rounded-full flex items-center justify-center font-bold">5</div>
                 <div>
                   <h4 className="font-medium text-gray-900 dark:text-white flex items-center gap-2">
                     <Bell className="w-4 h-4" /> Dispatcher Reschedules
                   </h4>
                   <p className="text-sm text-gray-600 dark:text-gray-300 mt-1">
-                    The dispatcher sees the ticket is ready and can reschedule the technician to complete the job.
+                    The dispatcher sees the ticket is ready (parts picked up) and can schedule the technician to complete the job.
                   </p>
                 </div>
               </div>
             </div>
+          </div>
+
+          <div>
+            <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-3">Job Staging - Chain of Custody</h3>
+            <div className="bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800 rounded-lg p-4 mb-4">
+              <p className="text-green-800 dark:text-green-200 text-sm">
+                <span className="font-medium">Why Job Staging?</span> Parts are received into a virtual staging area instead of directly to a truck.
+                This provides flexibility if technician assignments change and maintains clear chain of custody documentation.
+              </p>
+            </div>
+            <ul className="space-y-2 text-gray-600 dark:text-gray-300">
+              <li><span className="font-medium">Flexibility:</span> Parts float in reserved status until the technician picks them up</li>
+              <li><span className="font-medium">No Manual Transfers:</span> If a different tech is assigned, parts automatically follow the new assignment</li>
+              <li><span className="font-medium">Accountability:</span> Technician must acknowledge pickup, accepting custody of the parts</li>
+              <li><span className="font-medium">Visibility:</span> Dispatchers can see which parts are waiting for pickup at any time</li>
+            </ul>
           </div>
 
           <div>
@@ -516,6 +553,8 @@ export function HelpView() {
               <li>Purchasing should review the Parts Request Queue daily</li>
               <li>Monitor SLA breaches to prevent customer delays</li>
               <li>Keep vendor lead times updated for accurate delivery expectations</li>
+              <li>Technicians should check Parts Pickup queue before starting their day</li>
+              <li>Ensure technicians have a default truck assigned in their profile for pickup to work</li>
             </ul>
           </div>
         </div>
