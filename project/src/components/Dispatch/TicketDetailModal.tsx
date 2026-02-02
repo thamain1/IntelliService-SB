@@ -313,6 +313,12 @@ export function TicketDetailModal({ isOpen, onClose, ticketId, onUpdate }: Ticke
   const handleUpdate = async () => {
     if (!ticket) return;
 
+    // Cannot complete a ticket that is on hold
+    if (status === 'completed' && ticket.hold_active) {
+      alert('Cannot complete a ticket that is on hold. Please resume the ticket first by clicking "Resume Ticket".');
+      return;
+    }
+
     // Validate required codes when completing ticket
     if (status === 'completed') {
       if (!problemCode) {

@@ -1275,13 +1275,22 @@ export function TechnicianTicketView() {
                     </button>
                     <button
                       onClick={() => {
+                        if (selectedTicket.hold_active) {
+                          alert('Cannot complete a ticket that is on hold. Please resume the ticket first.');
+                          return;
+                        }
                         setUpdateFormData({ ...updateFormData, update_type: 'completed', status: 'completed', progress_percent: 100 });
                         setShowUpdateModal(true);
                       }}
-                      className="w-full btn btn-primary flex items-center justify-center space-x-2"
+                      disabled={selectedTicket.hold_active}
+                      className={`w-full btn flex items-center justify-center space-x-2 ${
+                        selectedTicket.hold_active
+                          ? 'btn-outline opacity-50 cursor-not-allowed'
+                          : 'btn-primary'
+                      }`}
                     >
                       <CheckCircle className="w-4 h-4" />
-                      <span>Mark Complete</span>
+                      <span>{selectedTicket.hold_active ? 'Resume Ticket First' : 'Mark Complete'}</span>
                     </button>
                   </div>
                 </>
@@ -1330,20 +1339,6 @@ export function TechnicianTicketView() {
                     className="input"
                     rows={4}
                     placeholder="Describe the update..."
-                  />
-                </div>
-
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-                    Progress %
-                  </label>
-                  <input
-                    type="number"
-                    min="0"
-                    max="100"
-                    value={updateFormData.progress_percent}
-                    onChange={(e) => setUpdateFormData({ ...updateFormData, progress_percent: parseInt(e.target.value) || 0 })}
-                    className="input"
                   />
                 </div>
 
