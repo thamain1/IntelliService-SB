@@ -19,7 +19,10 @@
 -- STEP 1: Create warranty_claims table
 -- =====================================================
 
-CREATE TABLE IF NOT EXISTS warranty_claims (
+-- Drop existing placeholder table if it exists
+DROP TABLE IF EXISTS warranty_claims CASCADE;
+
+CREATE TABLE warranty_claims (
   id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
 
   -- Claim identification
