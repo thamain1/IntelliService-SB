@@ -26,11 +26,12 @@
 -- =====================================================
 
 -- Insert Job Staging location if it doesn't exist
+-- Using 'warehouse' type since Job Staging is functionally a warehouse area
 INSERT INTO stock_locations (id, name, location_type, is_active)
 VALUES (
   'a0000000-0000-0000-0000-000000000001',
   'Job Staging - Parts Ready',
-  'staging',
+  'warehouse',
   true
 )
 ON CONFLICT (id) DO UPDATE SET
