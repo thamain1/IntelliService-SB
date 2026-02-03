@@ -21,3 +21,11 @@ dist-ssr
 *.sln
 *.sw?
 .env
+.env.production
+.env.local
+.env.*.local
+
+# Sensitive docs
+../docs/supabasepw.txt
+../docs/Twilio*
+../docs/DunawayData/

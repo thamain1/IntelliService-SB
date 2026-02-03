@@ -18,20 +18,41 @@ Deno.serve(async (req: Request) => {
   try {
     const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
     const supabaseAnonKey = Deno.env.get("SUPABASE_ANON_KEY")!;
-    
+    const supabaseServiceRoleKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
+
     const authHeader = req.headers.get("Authorization");
     if (!authHeader) {
       throw new Error("No authorization header");
     }
 
-    // Create client with the user's token
-    const supabase = createClient(supabaseUrl, supabaseAnonKey, {
+    // Create client with the user's token to verify they're an admin
+    const userClient = createClient(supabaseUrl, supabaseAnonKey, {
       global: {
         headers: {
           Authorization: authHeader
         }
       }
     });
+
+    // Get the calling user's profile to verify admin status
+    const { data: { user: callingUser } } = await userClient.auth.getUser();
+    if (!callingUser) {
+      throw new Error("Not authenticated");
+    }
+
+    const { data: profile, error: profileError } = await userClient
+      .from('profiles')
+      .select('role')
+      .eq('id', callingUser.id)
+      .single();
+
+    if (profileError || !profile) {
+      throw new Error("Could not verify user role");
+    }
+
+    if (profile.role !== 'admin') {
+      throw new Error("Only admins can update passwords");
+    }
 
     const { userId, newPassword } = await req.json();
 
@@ -43,24 +64,27 @@ Deno.serve(async (req: Request) => {
       throw new Error("Password must be at least 6 characters");
     }
 
-    // Call the SQL function which handles admin verification and password update
-    const { data, error } = await supabase
-      .rpc('admin_update_user_password', {
-        target_user_id: userId,
-        new_password: newPassword
-      });
+    // Create admin client with service role key to update the password
+    const adminClient = createClient(supabaseUrl, supabaseServiceRoleKey, {
+      auth: {
+        autoRefreshToken: false,
+        persistSession: false
+      }
+    });
 
-    if (error) {
-      console.error("RPC error:", error);
-      throw new Error(error.message);
-    }
+    // Use the Admin API to update the user's password
+    const { data: updateData, error: updateError } = await adminClient.auth.admin.updateUserById(
+      userId,
+      { password: newPassword }
+    );
 
-    if (!data.success) {
-      throw new Error(data.error);
+    if (updateError) {
+      console.error("Admin API error:", updateError);
+      throw new Error(updateError.message || "Failed to update password");
     }
 
     return new Response(
-      JSON.stringify({ success: true, message: data.message }),
+      JSON.stringify({ success: true, message: "Password updated successfully" }),
       {
         headers: {
           ...corsHeaders,
