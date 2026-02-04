@@ -62,6 +62,10 @@ export function CustomersView() {
       errors.push('ZIP code is required (at least 5 digits)');
     }
 
+    if (!formData.site_contact_name || formData.site_contact_name.trim().length < 2) {
+      errors.push('Site contact name is required');
+    }
+
     return errors;
   };
 
@@ -408,10 +412,11 @@ export function CustomersView() {
               <div className="grid grid-cols-2 gap-4">
                 <div>
                   <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-                    Site Contact Name
+                    Site Contact Name *
                   </label>
                   <input
                     type="text"
+                    required
                     value={formData.site_contact_name}
                     onChange={(e) => setFormData({ ...formData, site_contact_name: e.target.value })}
                     className="input"
@@ -719,10 +724,11 @@ export function CustomersView() {
                 <div className="grid grid-cols-2 gap-4">
                   <div>
                     <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-                      Site Contact Name
+                      Site Contact Name *
                     </label>
                     <input
                       type="text"
+                      required
                       value={formData.site_contact_name}
                       onChange={(e) => setFormData({ ...formData, site_contact_name: e.target.value })}
                       className="input"
