@@ -21,3 +21,12 @@ dist-ssr
 *.sln
 *.sw?
 .env
+
+# Archive and reference folders
+archive/
+docs/
+
+# Sensitive files
+**/supabasepw*.txt
+**/*credentials*
+**/*password*
