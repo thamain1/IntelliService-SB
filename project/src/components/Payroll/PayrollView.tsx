@@ -79,7 +79,7 @@ export function PayrollView() {
         .order('period_start_date', { ascending: false });
 
       if (error) throw error;
-      setPayrollRuns(data || []);
+      setPayrollRuns((data as any) || []);
     } catch (error) {
       console.error('Error loading payroll runs:', error);
     } finally {
@@ -96,7 +96,7 @@ export function PayrollView() {
         .order('profiles(full_name)', { ascending: true });
 
       if (error) throw error;
-      setPayrollDetails(data || []);
+      setPayrollDetails((data as any) || []);
     } catch (error) {
       console.error('Error loading payroll details:', error);
     }
@@ -110,7 +110,7 @@ export function PayrollView() {
         .order('deduction_name', { ascending: true });
 
       if (error) throw error;
-      setDeductions(data || []);
+      setDeductions((data as any) || []);
     } catch (error) {
       console.error('Error loading deductions:', error);
     }

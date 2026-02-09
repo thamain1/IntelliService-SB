@@ -76,18 +76,18 @@ export function InvoicingView() {
       }
 
       // Load customer and ticket data separately
-      const customerIds = [...new Set(data.map(inv => inv.customer_id).filter(Boolean))];
-      const ticketIds = [...new Set(data.map(inv => inv.ticket_id).filter(Boolean))];
+      const customerIds: string[] = [...new Set(data.map(inv => inv.customer_id).filter((id): id is string => !!id))];
+      const ticketIds: string[] = [...new Set(data.map(inv => inv.ticket_id).filter((id): id is string => !!id))];
 
       const { data: customersData } = await supabase
         .from('customers')
         .select('id, name')
-        .in('id', customerIds);
+        .in('id', customerIds.length > 0 ? customerIds : ['']);
 
       const { data: ticketsData } = await supabase
         .from('tickets')
         .select('id, title')
-        .in('id', ticketIds);
+        .in('id', ticketIds.length > 0 ? ticketIds : ['']);
 
       // Map the data
       const customersMap = new Map(customersData?.map(c => [c.id, c]) || []);
@@ -133,7 +133,7 @@ export function InvoicingView() {
         .order('created_at', { ascending: false });
 
       if (error) throw error;
-      setTickets(data || []);
+      setTickets((data as Ticket[]) || []);
     } catch (error) {
       console.error('Error loading tickets:', error);
     }
@@ -245,8 +245,8 @@ export function InvoicingView() {
       }));
 
       const { error: lineItemsError } = await supabase
-        .from('invoice_line_items')
-        .insert(lineItemsToInsert);
+        .from('invoice_line_items' as any)
+        .insert(lineItemsToInsert as any);
 
       if (lineItemsError) throw lineItemsError;
 
@@ -351,7 +351,7 @@ export function InvoicingView() {
           .eq('key', 'default_labor_rate')
           .maybeSingle();
 
-        const laborRate = laborRateSetting?.value ? parseFloat(laborRateSetting.value) : 85;
+        const laborRate = (laborRateSetting as any)?.value ? parseFloat((laborRateSetting as any).value) : 85;
 
         items.push({
           item_type: 'labor',
@@ -663,7 +663,7 @@ export function InvoicingView() {
                   >
                     <td className="px-6 py-4">
                       <div className="flex items-center space-x-2">
-                        {getStatusIcon(invoice.status)}
+                        {getStatusIcon(invoice.status ?? 'draft')}
                         <span className="font-medium text-gray-900 dark:text-white">
                           {invoice.invoice_number}
                         </span>
@@ -695,8 +695,8 @@ export function InvoicingView() {
                       </span>
                     </td>
                     <td className="px-6 py-4">
-                      <span className={`badge ${getStatusColor(invoice.status)}`}>
-                        {invoice.status}
+                      <span className={`badge ${getStatusColor(invoice.status ?? 'draft')}`}>
+                        {invoice.status ?? 'draft'}
                       </span>
                     </td>
                     <td className="px-6 py-4">
@@ -1215,39 +1215,39 @@ function InvoiceDetailModal({
                 <div className="flex justify-between text-sm">
                   <span className="text-gray-500 dark:text-gray-400">Subtotal:</span>
                   <span className="text-gray-900 dark:text-white font-medium">
-                    ${parseFloat(invoice.subtotal).toFixed(2)}
+                    ${(Number(invoice.subtotal) || 0).toFixed(2)}
                   </span>
                 </div>
                 <div className="flex justify-between text-sm">
                   <span className="text-gray-500 dark:text-gray-400">Tax ({invoice.tax_rate}%):</span>
                   <span className="text-gray-900 dark:text-white font-medium">
-                    ${parseFloat(invoice.tax_amount).toFixed(2)}
+                    ${(Number(invoice.tax_amount) || 0).toFixed(2)}
                   </span>
                 </div>
-                {parseFloat(invoice.discount_amount) > 0 && (
+                {(Number(invoice.discount_amount) || 0) > 0 && (
                   <div className="flex justify-between text-sm">
                     <span className="text-gray-500 dark:text-gray-400">Discount:</span>
                     <span className="text-gray-900 dark:text-white font-medium">
-                      -${parseFloat(invoice.discount_amount).toFixed(2)}
+                      -${(Number(invoice.discount_amount) || 0).toFixed(2)}
                     </span>
                   </div>
                 )}
                 <div className="flex justify-between text-lg font-bold border-t border-gray-200 dark:border-gray-700 pt-2">
                   <span className="text-gray-900 dark:text-white">Total:</span>
                   <span className="text-gray-900 dark:text-white">
-                    ${parseFloat(invoice.total_amount).toFixed(2)}
+                    ${(Number(invoice.total_amount) || 0).toFixed(2)}
                   </span>
                 </div>
                 <div className="flex justify-between text-sm">
                   <span className="text-gray-500 dark:text-gray-400">Amount Paid:</span>
                   <span className="text-green-600 dark:text-green-400 font-medium">
-                    ${parseFloat(invoice.amount_paid).toFixed(2)}
+                    ${(Number(invoice.amount_paid) || 0).toFixed(2)}
                   </span>
                 </div>
                 <div className="flex justify-between text-lg font-bold">
                   <span className="text-gray-900 dark:text-white">Balance Due:</span>
                   <span className="text-gray-900 dark:text-white">
-                    ${parseFloat(invoice.balance_due).toFixed(2)}
+                    ${(Number(invoice.balance_due) || 0).toFixed(2)}
                   </span>
                 </div>
               </div>

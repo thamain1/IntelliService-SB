@@ -6,14 +6,15 @@ import { useAuth } from '../../contexts/AuthContext';
 
 interface Customer {
   id: string;
-  company_name: string;
+  company_name?: string;
+  name?: string;
 }
 
 export function AHSSettingsPanel() {
   const { user } = useAuth();
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
-  const [defaults, setDefaults] = useState<AHSDefaults>({
+  const [_defaults, _setDefaults] = useState<AHSDefaults>({
     diagnosisFee: 94.0,
     laborRate: 94.0,
     billToCustomerId: null,
@@ -42,7 +43,7 @@ export function AHSSettingsPanel() {
         loadCustomers(),
       ]);
 
-      setDefaults(ahsDefaults);
+      _setDefaults(ahsDefaults);
       setFormData({
         diagnosisFee: ahsDefaults.diagnosisFee.toFixed(2),
         laborRate: ahsDefaults.laborRate.toFixed(2),
@@ -62,8 +63,8 @@ export function AHSSettingsPanel() {
     try {
       const { data, error } = await supabase
         .from('customers')
-        .select('id, company_name')
-        .order('company_name');
+        .select('id, name')
+        .order('name');
 
       if (error) throw error;
       return data || [];

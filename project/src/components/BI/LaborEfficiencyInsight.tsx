@@ -1,6 +1,6 @@
 import { useEffect, useState, useCallback } from 'react';
 import { Clock, DollarSign, TrendingUp, Users } from 'lucide-react';
-import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Legend, PieChart, Pie, Cell } from 'recharts';
+import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Legend } from 'recharts';
 import { BIPageLayout } from './BIPageLayout';
 import { DateRangeSelector } from './DateRangeSelector';
 import { useBIDateRange } from '../../hooks/useBIDateRange';
@@ -271,7 +271,7 @@ export function LaborEfficiencyInsight() {
                     }}
                     itemStyle={{ color: '#F9FAFB' }}
                     labelStyle={{ color: '#F9FAFB' }}
-                    formatter={(value: number) => [`${value} hrs`]}
+                    formatter={((value: number) => [`${value} hrs`]) as any}
                   />
                   <Legend />
                   <Bar dataKey="billable" name="Billable" fill="#3B82F6" radius={[4, 4, 0, 0]} />

@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { Calendar, DollarSign, CheckCircle, Clock, Plus, FileText, AlertTriangle } from 'lucide-react';
+import { Calendar, CheckCircle, Clock, Plus, FileText, AlertTriangle } from 'lucide-react';
 import { supabase } from '../../lib/supabase';
 import { useAuth } from '../../contexts/AuthContext';
 import { MilestoneInvoiceService } from '../../services/MilestoneInvoiceService';
@@ -38,10 +38,9 @@ export function ProjectBillingSchedule({ projectId, contractValue, customerId }:
   const { profile } = useAuth();
   const [schedules, setSchedules] = useState<BillingSchedule[]>([]);
   const [loading, setLoading] = useState(true);
-  const [showNewModal, setShowNewModal] = useState(false);
   const [billingMilestone, setBillingMilestone] = useState<BillingSchedule | null>(null);
-  const [billingInProgress, setBillingInProgress] = useState(false);
   const [project, setProject] = useState<Project | null>(null);
+  const [_showNewModal, setShowNewModal] = useState(false);
 
   useEffect(() => {
     loadBillingSchedules();
@@ -72,7 +71,7 @@ export function ProjectBillingSchedule({ projectId, contractValue, customerId }:
         .order('sequence');
 
       if (error) throw error;
-      setSchedules(data || []);
+      setSchedules((data as any) || []);
     } catch (error) {
       console.error('Error loading billing schedules:', error);
     } finally {
@@ -94,7 +93,7 @@ export function ProjectBillingSchedule({ projectId, contractValue, customerId }:
       const { error } = await supabase
         .from('project_billing_schedules')
         .update({
-          status: newStatus,
+          status: newStatus as any,
           updated_by: profile?.id,
           updated_at: new Date().toISOString()
         })
@@ -563,7 +562,7 @@ function BillMilestoneModal({
           <button
             onClick={handleCreateInvoice}
             className="btn btn-primary flex-1"
-            disabled={loading || (validation && !validation.valid)}
+            disabled={loading || (validation ? !validation.valid : false)}
           >
             {loading ? 'Creating Invoice...' : 'Create Invoice'}
           </button>

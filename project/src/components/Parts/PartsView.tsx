@@ -143,7 +143,7 @@ export function PartsView({ itemType = 'part' }: PartsViewProps) {
         .order('name', { ascending: true });
 
       if (error) throw error;
-      setParts(data || []);
+      setParts((data as any) || []);
     } catch (error) {
       console.error(`Error loading ${itemLabelPlural.toLowerCase()}:`, error);
     } finally {
@@ -159,17 +159,17 @@ export function PartsView({ itemType = 'part' }: PartsViewProps) {
       description: part.description || '',
       manufacturer: part.manufacturer || '',
       category: part.category || '',
-      quantity_on_hand: part.quantity_on_hand,
-      reorder_level: part.reorder_level,
-      unit_price: part.unit_price,
+      quantity_on_hand: part.quantity_on_hand ?? 0,
+      reorder_level: part.reorder_level ?? 0,
+      unit_price: part.unit_price ?? 0,
       location: part.location || '',
-      warranty_period_months: part.warranty_period_months,
+      warranty_period_months: part.warranty_period_months || 0,
       is_serialized: part.is_serialized || false,
       default_warranty_months: part.default_warranty_months || 12,
       vendor_part_number: part.vendor_part_number || '',
       reorder_point: part.reorder_point || 0,
       reorder_quantity: part.reorder_quantity || 0,
-      item_type: part.item_type || itemType,
+      item_type: (part.item_type || itemType) as any,
       is_returnable: part.is_returnable || false,
       tool_category: part.tool_category || '',
       asset_tag: part.asset_tag || '',
@@ -313,13 +313,13 @@ export function PartsView({ itemType = 'part' }: PartsViewProps) {
     return matchesSearch && matchesCategory;
   });
 
-  const lowStockParts = parts.filter((p) => p.quantity_on_hand <= p.reorder_level);
-  const totalValue = parts.reduce((sum, p) => sum + p.quantity_on_hand * p.unit_price, 0);
+  const lowStockParts = parts.filter((p) => (p.quantity_on_hand ?? 0) <= (p.reorder_level ?? 0));
+  const totalValue = parts.reduce((sum, p) => sum + (p.quantity_on_hand ?? 0) * (p.unit_price ?? 0), 0);
 
   const getStockStatus = (part: Part) => {
-    if (part.quantity_on_hand === 0) {
+    if ((part.quantity_on_hand ?? 0) === 0) {
       return { text: 'Out of Stock', class: 'badge badge-red' };
-    } else if (part.quantity_on_hand <= part.reorder_level) {
+    } else if ((part.quantity_on_hand ?? 0) <= (part.reorder_level ?? 0)) {
       return { text: 'Low Stock', class: 'badge badge-yellow' };
     } else {
       return { text: 'In Stock', class: 'badge badge-green' };
@@ -463,7 +463,7 @@ export function PartsView({ itemType = 'part' }: PartsViewProps) {
             className="input md:w-64"
           >
             <option value="all">All Categories</option>
-            {categories.map((cat) => (
+            {categories.map((cat: any) => (
               <option key={cat} value={cat}>
                 {cat}
               </option>
@@ -549,18 +549,18 @@ export function PartsView({ itemType = 'part' }: PartsViewProps) {
                       <td className="px-6 py-4">
                         <div>
                           <span className="font-medium text-gray-900 dark:text-white">
-                            {part.quantity_on_hand}
+                            {part.quantity_on_hand ?? 0}
                           </span>
-                          {part.quantity_on_hand <= part.reorder_level && (
+                          {(part.quantity_on_hand ?? 0) <= (part.reorder_level ?? 0) && (
                             <p className="text-xs text-red-600 mt-1">
-                              Reorder at: {part.reorder_level}
+                              Reorder at: {part.reorder_level ?? 0}
                             </p>
                           )}
                         </div>
                       </td>
                       <td className="px-6 py-4">
                         <span className="text-gray-900 dark:text-white">
-                          ${part.unit_price.toFixed(2)}
+                          ${(part.unit_price ?? 0).toFixed(2)}
                         </span>
                       </td>
                       <td className="px-6 py-4">

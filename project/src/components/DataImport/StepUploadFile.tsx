@@ -48,7 +48,7 @@ export function StepUploadFile({ entityType, onNext, onBack }: StepUploadFilePro
       const content = await readFileContent(selectedFile);
 
       // Detect format
-      const { delimiter, encoding } = DataImportService.detectFileFormat(content);
+      const { delimiter } = DataImportService.detectFileFormat(content);
 
       // Parse CSV
       const parsedRows = DataImportService.parseCSV(content, delimiter);

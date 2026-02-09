@@ -138,8 +138,8 @@ export function EstimateDetailModal({ estimateId, isOpen, onClose, onSuccess }: 
     setLoading(true);
     try {
       const [estimateRes, lineItemsRes] = await Promise.all([
-        supabase
-          .from('estimates')
+        (supabase
+          .from('estimates') as any)
           .select(`
             *,
             customers(name, email, phone, address),
@@ -157,12 +157,12 @@ export function EstimateDetailModal({ estimateId, isOpen, onClose, onSuccess }: 
       if (estimateRes.error) throw estimateRes.error;
       if (lineItemsRes.error) throw lineItemsRes.error;
 
-      setEstimate(estimateRes.data);
-      setLineItems(lineItemsRes.data || []);
+      setEstimate(estimateRes.data as unknown as EstimateDetail);
+      setLineItems((lineItemsRes.data || []) as LineItem[]);
       await Promise.all([loadLinkStatus(), loadConversionInfo()]);
 
       // Check if estimate is linked to an AHS ticket
-      const ticketId = estimateRes.data.ticket_id;
+      const ticketId = (estimateRes.data as any).ticket_id;
       if (ticketId) {
         const ahsData = await AHSTicketService.getAHSTicketData(ticketId);
         if (ahsData && AHSTicketService.isAHSTicket(ahsData.ticketType)) {
@@ -213,7 +213,7 @@ export function EstimateDetailModal({ estimateId, isOpen, onClose, onSuccess }: 
         .eq('estimate_id', estimateId)
         .maybeSingle();
 
-      setConversionInfo(data);
+      setConversionInfo(data as ConversionInfo | null);
     } catch (error) {
       console.error('Error loading conversion info:', error);
     }
@@ -230,11 +230,12 @@ export function EstimateDetailModal({ estimateId, isOpen, onClose, onSuccess }: 
 
       if (error) throw error;
 
-      if (data?.success) {
+      const result = data as any;
+      if (result?.success) {
         await loadEstimateDetails();
-        alert(`Updated costs for ${data.updated_count} part line(s)`);
+        alert(`Updated costs for ${result.updated_count} part line(s)`);
       } else {
-        alert(data?.error || 'Failed to refresh costs');
+        alert(result?.error || 'Failed to refresh costs');
       }
     } catch (error) {
       console.error('Error refreshing costs:', error);
@@ -407,8 +408,8 @@ export function EstimateDetailModal({ estimateId, isOpen, onClose, onSuccess }: 
 
       if (lineItemsToInsert.length > 0) {
         const { data: insertedItems, error: lineItemsError } = await supabase
-          .from('estimate_line_items')
-          .insert(lineItemsToInsert)
+          .from('estimate_line_items' as any)
+          .insert(lineItemsToInsert as any)
           .select();
 
         if (lineItemsError) {
@@ -485,16 +486,17 @@ export function EstimateDetailModal({ estimateId, isOpen, onClose, onSuccess }: 
 
       if (error) throw error;
 
-      if (data?.success) {
-        if (data.already_converted) {
-          alert(`This estimate was already converted to ${data.target_type === 'service_ticket' ? 'ticket' : 'project'}`);
+      const result = data as any;
+      if (result?.success) {
+        if (result.already_converted) {
+          alert(`This estimate was already converted to ${result.target_type === 'service_ticket' ? 'ticket' : 'project'}`);
         } else {
-          alert(`Successfully converted to ticket ${data.ticket_number}`);
+          alert(`Successfully converted to ticket ${result.ticket_number}`);
         }
         await loadEstimateDetails();
         if (onSuccess) onSuccess();
       } else {
-        alert(data?.error || 'Failed to convert to ticket');
+        alert(result?.error || 'Failed to convert to ticket');
       }
     } catch (error) {
       console.error('Error converting to ticket:', error);
@@ -518,16 +520,17 @@ export function EstimateDetailModal({ estimateId, isOpen, onClose, onSuccess }: 
 
       if (error) throw error;
 
-      if (data?.success) {
-        if (data.already_converted) {
-          alert(`This estimate was already converted to ${data.target_type === 'service_ticket' ? 'ticket' : 'project'}`);
+      const result = data as any;
+      if (result?.success) {
+        if (result.already_converted) {
+          alert(`This estimate was already converted to ${result.target_type === 'service_ticket' ? 'ticket' : 'project'}`);
         } else {
-          alert(`Successfully converted to project ${data.project_number} with initial work order ${data.initial_ticket_number}`);
+          alert(`Successfully converted to project ${result.project_number} with initial work order ${result.initial_ticket_number}`);
         }
         await loadEstimateDetails();
         if (onSuccess) onSuccess();
       } else {
-        alert(data?.error || 'Failed to convert to project');
+        alert(result?.error || 'Failed to convert to project');
       }
     } catch (error) {
       console.error('Error converting to project:', error);

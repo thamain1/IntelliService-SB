@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { FileText, Plus, Search, Calendar, DollarSign, AlertCircle, CheckCircle, Clock, XCircle } from 'lucide-react';
+import { FileText, Plus, Search, DollarSign, AlertCircle, CheckCircle, Clock, XCircle } from 'lucide-react';
 import { VendorContractService } from '../../services/VendorContractService';
 import type { Database } from '../../lib/database.types';
 import { NewVendorContractModal } from './NewVendorContractModal';
@@ -58,7 +58,7 @@ export function VendorContractsView({ vendorId, showVendorColumn = true }: Vendo
     }
   };
 
-  const getStatusBadge = (status: string) => {
+  const getStatusBadge = (status: string | null) => {
     const badges: Record<string, { className: string; icon: any }> = {
       active: { className: 'badge badge-green', icon: CheckCircle },
       draft: { className: 'badge badge-gray', icon: Clock },
@@ -66,7 +66,7 @@ export function VendorContractsView({ vendorId, showVendorColumn = true }: Vendo
       terminated: { className: 'badge badge-red', icon: XCircle },
       suspended: { className: 'badge badge-yellow', icon: AlertCircle },
     };
-    const config = badges[status] || badges.draft;
+    const config = badges[status || ''] || badges.draft;
     const Icon = config.icon;
     return (
       <span className={config.className}>
@@ -76,7 +76,7 @@ export function VendorContractsView({ vendorId, showVendorColumn = true }: Vendo
     );
   };
 
-  const getContractTypeBadge = (type: string) => {
+  const getContractTypeBadge = (type: string | null) => {
     const colors: Record<string, string> = {
       pricing: 'bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200',
       service: 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200',
@@ -87,8 +87,8 @@ export function VendorContractsView({ vendorId, showVendorColumn = true }: Vendo
       other: 'bg-gray-100 text-gray-800 dark:bg-gray-700 dark:text-gray-200',
     };
     return (
-      <span className={`px-2 py-1 text-xs rounded-full ${colors[type] || colors.other}`}>
-        {type.toUpperCase()}
+      <span className={`px-2 py-1 text-xs rounded-full ${colors[type ?? ''] || colors.other}`}>
+        {(type ?? 'other').toUpperCase()}
       </span>
     );
   };

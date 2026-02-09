@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { X, Clock, User, Calendar, MapPin, Wrench, AlertCircle, Plus, Trash2, UserPlus, Pause, Package, Play, Tag, TrendingUp, AlertTriangle } from 'lucide-react';
+import { X, Clock, User, Calendar, Wrench, AlertCircle, Plus, Trash2, UserPlus, Pause, Package, Play, Tag, TrendingUp, AlertTriangle } from 'lucide-react';
 import { supabase } from '../../lib/supabase';
 import { CodeSelector } from '../CRM/CodeSelector';
 import { AHSPanel } from '../Tickets/AHSPanel';
@@ -81,8 +81,8 @@ export function TicketDetailModal({ isOpen, onClose, ticketId, onUpdate }: Ticke
 
   const loadTicket = async () => {
     try {
-      const { data, error } = await supabase
-        .from('tickets')
+      const { data, error } = await (supabase
+        .from('tickets') as any)
         .select(`
           *,
           customers!tickets_customer_id_fkey(name, phone, address, city, state),
@@ -95,17 +95,18 @@ export function TicketDetailModal({ isOpen, onClose, ticketId, onUpdate }: Ticke
         .maybeSingle();
 
       if (error) throw error;
-      if (data) {
-        setTicket(data);
-        setPlannedParts(data.ticket_parts_planned || []);
-        setPlannedLabor(data.ticket_labor_planned || []);
-        setHoursOnsite(data.hours_onsite?.toString() || '');
-        setStatus(data.status);
-        setProblemCode((data as any).problem_code || null);
-        setResolutionCode((data as any).resolution_code || null);
+      const ticketData = data;
+      if (ticketData) {
+        setTicket(ticketData as Ticket);
+        setPlannedParts(ticketData.ticket_parts_planned || []);
+        setPlannedLabor(ticketData.ticket_labor_planned || []);
+        setHoursOnsite(ticketData.hours_onsite?.toString() || '');
+        setStatus(ticketData.status || '');
+        setProblemCode((ticketData as any).problem_code || null);
+        setResolutionCode((ticketData as any).resolution_code || null);
         // Format date for datetime-local input (YYYY-MM-DDTHH:MM)
-        if (data.scheduled_date) {
-          const date = new Date(data.scheduled_date);
+        if (ticketData.scheduled_date) {
+          const date = new Date(ticketData.scheduled_date);
           const localDate = new Date(date.getTime() - date.getTimezoneOffset() * 60000);
           setScheduledDate(localDate.toISOString().slice(0, 16));
         } else {
@@ -230,7 +231,7 @@ export function TicketDetailModal({ isOpen, onClose, ticketId, onUpdate }: Ticke
 
     setSaving(true);
     try {
-      const { data, error } = await supabase.rpc('fn_ticket_hold_for_parts', {
+      const { data: _holdData, error } = await supabase.rpc('fn_ticket_hold_for_parts', {
         p_ticket_id: ticketId,
         p_urgency: partsRequest.urgency,
         p_notes: partsRequest.notes,
@@ -261,7 +262,7 @@ export function TicketDetailModal({ isOpen, onClose, ticketId, onUpdate }: Ticke
 
     setSaving(true);
     try {
-      const { data, error } = await supabase.rpc('fn_ticket_report_issue', {
+      const { data: _reportData, error } = await supabase.rpc('fn_ticket_report_issue', {
         p_ticket_id: ticketId,
         p_category: issueReport.category,
         p_severity: issueReport.severity,
@@ -290,9 +291,9 @@ export function TicketDetailModal({ isOpen, onClose, ticketId, onUpdate }: Ticke
 
     setSaving(true);
     try {
-      const { data, error } = await supabase.rpc('fn_ticket_resume', {
+      const { data: _resumeData, error } = await supabase.rpc('fn_ticket_resume', {
         p_ticket_id: ticketId,
-        p_resolution_notes: null,
+        p_resolution_notes: undefined,
       });
 
       if (error) throw error;
@@ -461,11 +462,11 @@ export function TicketDetailModal({ isOpen, onClose, ticketId, onUpdate }: Ticke
                 <p className="text-gray-600 dark:text-gray-400 mt-1">{ticket.title}</p>
               </div>
               <div className="flex items-center space-x-2">
-                <span className={`badge ${getPriorityColor(ticket.priority)}`}>
+                <span className={`badge ${getPriorityColor(ticket.priority ?? '')}`}>
                   {ticket.priority}
                 </span>
-                <span className={`badge ${getStatusColor(ticket.status)}`}>
-                  {ticket.status.replace('_', ' ')}
+                <span className={`badge ${getStatusColor(ticket.status ?? '')}`}>
+                  {(ticket.status ?? 'unknown').replace('_', ' ')}
                 </span>
                 {ticket.hold_active && (
                   <span className="badge bg-orange-100 text-orange-800 dark:bg-orange-900/30 dark:text-orange-400 flex items-center">

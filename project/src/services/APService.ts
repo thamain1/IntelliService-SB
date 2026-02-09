@@ -4,97 +4,28 @@
  */
 
 import { supabase } from '../lib/supabase';
+import type { Tables, Views } from '../lib/dbTypes';
 
-// Types
-export interface Bill {
-  id: string;
-  bill_number: string;
-  vendor_id: string;
-  bill_date: string;
-  due_date: string;
-  received_date?: string;
-  status: BillStatus;
-  subtotal: number;
-  tax_amount: number;
-  total_amount: number;
-  amount_paid: number;
-  balance_due: number;
-  payment_terms?: string;
-  reference_number?: string;
-  notes?: string;
-  created_by?: string;
-  created_at: string;
-  updated_at: string;
-  vendor?: {
-    id: string;
-    name: string;
-    vendor_code?: string;
-  };
+// Use DB types directly for type safety
+export type Bill = Tables<'bills'> & {
+  vendor?: { id: string; name: string; vendor_code: string | null };
   line_items?: BillLineItem[];
-}
+};
 
-export interface BillLineItem {
-  id?: string;
-  bill_id?: string;
-  description: string;
-  quantity: number;
-  unit_price: number;
-  amount: number;
-  gl_account_id?: string;
-  sort_order?: number;
-  gl_account?: {
-    id: string;
-    account_code: string;
-    account_name: string;
-  };
-}
+export type BillLineItem = Tables<'bill_line_items'> & {
+  gl_account?: { id: string; account_code: string; account_name: string } | null;
+};
 
-export interface VendorPayment {
-  id: string;
-  payment_number: string;
-  vendor_id: string;
-  payment_date: string;
-  amount: number;
-  payment_method?: PaymentMethod;
-  reference_number?: string;
-  check_number?: string;
-  bank_account_id?: string;
-  notes?: string;
-  created_by?: string;
-  created_at: string;
-  vendor?: {
-    id: string;
-    name: string;
-    vendor_code?: string;
-  };
+export type VendorPayment = Tables<'vendor_payments'> & {
+  vendor?: { id: string; name: string; vendor_code: string | null };
   allocations?: PaymentAllocation[];
-}
+};
 
-export interface PaymentAllocation {
-  id?: string;
-  payment_id?: string;
-  bill_id: string;
-  amount: number;
-  bill?: {
-    id: string;
-    bill_number: string;
-    total_amount: number;
-    balance_due: number;
-  };
-}
+export type PaymentAllocation = Tables<'vendor_payment_allocations'> & {
+  bill?: { id: string; bill_number: string; total_amount: number; balance_due: number };
+};
 
-export interface APAgingRow {
-  vendor_id: string;
-  vendor_name: string;
-  vendor_code?: string;
-  bill_count: number;
-  current_amount: number;
-  days_1_30: number;
-  days_31_60: number;
-  days_61_90: number;
-  days_over_90: number;
-  total_balance: number;
-}
+export type APAgingRow = Views<'vw_ap_aging'>;
 
 export interface APSummary {
   total_outstanding: number;
@@ -309,7 +240,7 @@ export class APService {
    * Update a bill
    */
   static async updateBill(billId: string, input: UpdateBillInput): Promise<Bill> {
-    const { data, error } = await supabase
+    const { error } = await supabase
       .from('bills')
       .update({
         ...input,
@@ -503,7 +434,7 @@ export class APService {
         payment_number: paymentNumber,
         vendor_id: input.vendor_id,
         payment_date: input.payment_date,
-        amount: input.amount,
+        payment_amount: input.amount,
         payment_method: input.payment_method,
         reference_number: input.reference_number,
         check_number: input.check_number,

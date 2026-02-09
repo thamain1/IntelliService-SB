@@ -60,7 +60,7 @@ export function PartsPickupView() {
         .select('*');
 
       if (error) throw error;
-      setPickLists(data || []);
+      setPickLists((data as any) || []);
     } catch (error) {
       console.error('Error loading pick lists:', error);
     } finally {
@@ -88,7 +88,7 @@ export function PartsPickupView() {
 
       if (error) throw error;
 
-      alert(`Successfully picked up ${data.items_transferred} item(s). Parts have been added to your truck inventory.`);
+      alert(`Successfully picked up ${(data as any)?.items_transferred ?? 0} item(s). Parts have been added to your truck inventory.`);
       loadPickLists();
     } catch (error: any) {
       console.error('Error picking up parts:', error);

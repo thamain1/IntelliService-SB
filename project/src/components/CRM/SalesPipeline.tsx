@@ -1,16 +1,10 @@
 import { useState, useEffect } from 'react';
 import {
-  DollarSign,
   Calendar,
-  Phone,
   User,
-  ChevronRight,
   GripVertical,
   Clock,
   AlertCircle,
-  Plus,
-  Filter,
-  MoreVertical,
   Eye,
   X,
 } from 'lucide-react';
@@ -66,6 +60,7 @@ export function SalesPipeline({ onRefresh }: SalesPipelineProps) {
     }
 
     try {
+      if (!targetStage.id || !draggedItem.estimate_id) return;
       await CRMService.moveEstimateToStage(draggedItem.estimate_id, targetStage.id);
 
       // Update local state
@@ -143,8 +138,8 @@ export function SalesPipeline({ onRefresh }: SalesPipelineProps) {
         <div className="flex gap-4 min-w-max">
           {pipeline.stages.map((stage) => {
             const stageItems = getItemsByStage(stage.id);
-            const stageTotal = getStageTotal(stage.id);
-            const weightedValue = getWeightedValue(stage.id, stage.probability);
+            const stageTotal = getStageTotal(stage.id ?? '');
+            const weightedValue = getWeightedValue(stage.id ?? '', stage.probability ?? 0);
 
             return (
               <div
@@ -209,7 +204,7 @@ export function SalesPipeline({ onRefresh }: SalesPipelineProps) {
                         <span className="text-lg font-bold text-green-600">
                           ${item.total_amount?.toLocaleString()}
                         </span>
-                        {item.days_in_stage > 7 && (
+                        {(item.days_in_stage ?? 0) > 7 && (
                           <span className="flex items-center gap-1 text-xs text-yellow-600">
                             <Clock className="w-3 h-3" />
                             {item.days_in_stage}d

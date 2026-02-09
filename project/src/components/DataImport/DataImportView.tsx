@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { Upload, Trash2, AlertCircle, CheckCircle, Clock, XCircle, Eye, Ban, MoreVertical } from 'lucide-react';
+import { Upload, AlertCircle, CheckCircle, Clock, XCircle, Eye, Ban } from 'lucide-react';
 import { DataImportService, ImportBatch, ImportEntityType } from '../../services/DataImportService';
 import { ImportWizard } from './ImportWizard';
 import { BatchDetailView } from './BatchDetailView';
@@ -26,21 +26,6 @@ export function DataImportView() {
       console.error('Error loading imports:', error);
     } finally {
       setLoading(false);
-    }
-  };
-
-  const handleRollback = async (batchId: string, batchNumber: string) => {
-    if (!confirm(`Are you sure you want to rollback import batch ${batchNumber}? This will delete all records created by this import.`)) {
-      return;
-    }
-
-    try {
-      await DataImportService.rollbackImportBatch(batchId);
-      alert('Import batch rolled back successfully');
-      loadImports();
-    } catch (error: any) {
-      console.error('Error rolling back import:', error);
-      alert('Failed to rollback import: ' + error.message);
     }
   };
 

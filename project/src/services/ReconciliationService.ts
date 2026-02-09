@@ -1,29 +1,12 @@
 import { supabase } from '../lib/supabase';
+import type { Tables, Enums } from '../lib/dbTypes';
 
-export type ReconciliationStatus = 'in_progress' | 'completed' | 'cancelled' | 'rolled_back';
-export type BankLineMatchStatus = 'unmatched' | 'auto_matched' | 'manually_matched' | 'excluded';
+export type ReconciliationStatus = Enums<'reconciliation_status'>;
+export type BankLineMatchStatus = Enums<'bank_line_match_status'>;
 export type AdjustmentType = 'bank_fee' | 'interest_income' | 'nsf' | 'correction' | 'other';
 
-export interface BankReconciliation {
-  id: string;
-  account_id: string;
-  statement_start_date: string;
-  statement_end_date: string;
-  statement_ending_balance: number;
-  calculated_book_balance?: number;
-  cleared_balance: number;
-  difference: number;
-  status: ReconciliationStatus;
-  created_by: string;
-  created_at: string;
-  completed_at?: string;
-  completed_by?: string;
-  cancelled_at?: string;
-  cancelled_by?: string;
-  rolled_back_at?: string;
-  rolled_back_by?: string;
-  notes?: string;
-}
+// Use DB types directly
+export type BankReconciliation = Tables<'bank_reconciliations'>;
 
 export interface GLEntryForReconciliation {
   id: string;
@@ -41,34 +24,11 @@ export interface GLEntryForReconciliation {
   created_at: string;
 }
 
-export interface BankStatementLine {
-  id: string;
-  reconciliation_id: string;
-  external_transaction_id?: string;
-  transaction_date: string;
-  description: string;
-  amount: number;
-  balance?: number;
-  matched_gl_entry_id?: string;
-  match_status: BankLineMatchStatus;
-  matched_at?: string;
-  matched_by?: string;
-  notes?: string;
-  created_at: string;
-}
+// Use DB types directly
+export type BankStatementLine = Tables<'bank_statement_lines'>;
 
-export interface ReconciliationAdjustment {
-  id: string;
-  reconciliation_id: string;
-  gl_entry_id?: string;
-  adjustment_type: AdjustmentType;
-  description: string;
-  amount: number;
-  debit_account_id?: string;
-  credit_account_id?: string;
-  created_by: string;
-  created_at: string;
-}
+// Use DB types directly
+export type ReconciliationAdjustment = Tables<'reconciliation_adjustments'>;
 
 export interface ReconciliationSummary {
   id: string;
@@ -96,7 +56,11 @@ export interface ReconciliationSummary {
 export interface AutoMatchSuggestion {
   bank_line_id: string;
   gl_entry_id: string;
-  match_confidence: number;
+  match_confidence?: number;
+  bank_line_date?: string;
+  amount?: number;
+  bank_line_description?: string;
+  confidence?: 'high' | 'medium' | 'low';
 }
 
 export class ReconciliationService {
@@ -202,7 +166,7 @@ export class ReconciliationService {
   ): Promise<GLEntryForReconciliation[]> {
     const { data, error } = await supabase.rpc('get_unreconciled_gl_entries', {
       p_account_id: accountId,
-      p_end_date: endDate || null,
+      p_end_date: endDate ?? undefined,
     });
 
     if (error) throw error;
@@ -229,7 +193,7 @@ export class ReconciliationService {
     // Get unreconciled entries for this account
     const unreconciledEntries = await this.getUnreconciledGLEntries(
       reconciliation.account_id,
-      reconciliation.statement_end_date
+      reconciliation.statement_end_date ?? undefined
     );
 
     // Combine and format
@@ -458,6 +422,11 @@ export class ReconciliationService {
 
     const entryNumber = `JE-${String((entryCount as any)?.count || 0).padStart(6, '0')}`;
 
+    // Calculate fiscal period and year from entry date
+    const entryDate = new Date(params.entry_date);
+    const fiscalYear = entryDate.getFullYear();
+    const fiscalPeriod = entryDate.getMonth() + 1;
+
     // Create GL entries (debit and credit)
     const glEntries = [
       {
@@ -470,6 +439,9 @@ export class ReconciliationService {
         reference_type: 'adjustment',
         reference_id: params.reconciliation_id,
         created_by: userId,
+        posted_by: userId,
+        fiscal_year: fiscalYear,
+        fiscal_period: fiscalPeriod,
       },
       {
         entry_number: entryNumber,
@@ -481,6 +453,9 @@ export class ReconciliationService {
         reference_type: 'adjustment',
         reference_id: params.reconciliation_id,
         created_by: userId,
+        posted_by: userId,
+        fiscal_year: fiscalYear,
+        fiscal_period: fiscalPeriod,
       },
     ];
 
@@ -550,9 +525,10 @@ export class ReconciliationService {
 
     // Validate difference is within tolerance
     const tolerance = 0.01;
-    if (Math.abs(reconciliation.difference) > tolerance) {
+    const diff = reconciliation.difference ?? 0;
+    if (Math.abs(diff) > tolerance) {
       throw new Error(
-        `Cannot complete reconciliation: difference of $${reconciliation.difference.toFixed(2)} exceeds tolerance of $${tolerance.toFixed(2)}`
+        `Cannot complete reconciliation: difference of $${diff.toFixed(2)} exceeds tolerance of $${tolerance.toFixed(2)}`
       );
     }
 

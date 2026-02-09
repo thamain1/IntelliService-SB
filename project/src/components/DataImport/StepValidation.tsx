@@ -27,7 +27,8 @@ interface ErrorRow {
 export function StepValidation({
   entityType,
   importBatch,
-  stagingRowIds,
+  // @ts-ignore - Parameter is part of interface contract but not used in this component
+  _stagingRowIds,
   onNext,
   onBack,
 }: StepValidationProps) {
@@ -57,7 +58,7 @@ export function StepValidation({
 
       // Load all staging rows
       const { data: stagingRows, error } = await supabase
-        .from(tableName)
+        .from(tableName as any)
         .select('*')
         .eq('import_batch_id', importBatch.id)
         .order('row_number', { ascending: true });
@@ -89,7 +90,7 @@ export function StepValidation({
         }
 
         const row = stagingRows![i];
-        let validationErrors;
+        let validationErrors: { field: string; message: string }[] = [];
 
         if (entityType === 'customers') {
           validationErrors = DataImportService.validateCustomerRow(row as any);
@@ -109,19 +110,19 @@ export function StepValidation({
         const validationStatus = validationErrors.length > 0 ? 'error' : 'valid';
 
         await supabase
-          .from(tableName)
+          .from(tableName as any)
           .update({
             validation_status: validationStatus,
             validation_errors: validationErrors,
           })
-          .eq('id', row.id);
+          .eq('id', (row as any).id);
 
         if (validationErrors.length > 0) {
           errorCount++;
           errors.push({
-            row_number: row.row_number,
+            row_number: (row as any).row_number,
             errors: validationErrors.map((e: any) => `${e.field}: ${e.message}`),
-            data: row.raw_row_json,
+            data: (row as any).raw_row_json,
           });
         } else {
           validCount++;

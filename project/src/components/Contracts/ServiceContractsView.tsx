@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { FileText, Plus, Search, Calendar, DollarSign, TrendingUp, Users, AlertTriangle, RefreshCw, CheckCircle, Clock, BarChart2, Mail } from 'lucide-react';
+import { FileText, Plus, Search, Calendar, DollarSign, Users, AlertTriangle, RefreshCw, CheckCircle, Clock, BarChart2, Mail } from 'lucide-react';
 import { supabase } from '../../lib/supabase';
 import type { Database } from '../../lib/database.types';
 import { ContractDetailModal } from './ContractDetailModal';
@@ -64,13 +64,13 @@ export function ServiceContractsView() {
         `);
 
       if (statusFilter !== 'all') {
-        query = query.eq('status', statusFilter);
+        query = query.eq('status', statusFilter as ContractStatus);
       }
 
       const { data, error } = await query.order('created_at', { ascending: false });
 
       if (error) throw error;
-      setContracts(data || []);
+      setContracts((data as ServiceContract[]) || []);
     } catch (error) {
       console.error('Error loading contracts:', error);
     } finally {
@@ -129,7 +129,7 @@ export function ServiceContractsView() {
     }
   };
 
-  const handleRenewContract = async (contractId: string, daysUntilExpiry: number) => {
+  const handleRenewContract = async (contractId: string, _daysUntilExpiry: number) => {
     setRenewingContractId(contractId);
     try {
       // Calculate new end date (1 year from current end date)
@@ -192,8 +192,8 @@ export function ServiceContractsView() {
     }
   };
 
-  const formatStatus = (status: string) => {
-    return status.charAt(0).toUpperCase() + status.slice(1);
+  const formatStatus = (status: string | null) => {
+    return (status ?? 'active').charAt(0).toUpperCase() + (status ?? 'active').slice(1);
   };
 
   const formatCurrency = (amount: number) => {

@@ -78,7 +78,7 @@ export function SendEstimateModal({
         .order('is_primary', { ascending: false });
 
       if (error) throw error;
-      setContacts(data || []);
+      setContacts((data as unknown as any[]) || []);
 
       if (data && data.length > 0 && data[0].is_primary) {
         setSelectedContactId(data[0].id);
@@ -124,7 +124,15 @@ export function SendEstimateModal({
         .limit(10);
 
       if (error) throw error;
-      setDeliveryHistory(data || []);
+      setDeliveryHistory((data || []).map(d => ({
+        id: d.id,
+        channel: d.channel,
+        to_address: d.to_address,
+        status: d.status,
+        created_at: d.created_at || '',
+        sent_at: d.sent_at || null,
+        error: d.error || null,
+      })));
     } catch (err) {
       console.error('Error loading delivery history:', err);
     }

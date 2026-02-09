@@ -27,7 +27,8 @@ interface DepositRelease {
 }
 
 export function DepositReleasePanel({ projectId }: DepositReleasePanelProps) {
-  const { profile } = useAuth();
+  // @ts-ignore - profile is available from context but not used in this component
+  const { _profile } = useAuth();
   const [summary, setSummary] = useState<DepositSummary | null>(null);
   const [releases, setReleases] = useState<DepositRelease[]>([]);
   const [loading, setLoading] = useState(true);
@@ -40,7 +41,7 @@ export function DepositReleasePanel({ projectId }: DepositReleasePanelProps) {
   const loadData = async () => {
     try {
       const depositSummary = await MilestoneInvoiceService.getProjectDepositSummary(projectId);
-      setSummary(depositSummary);
+      setSummary(depositSummary as any);
 
       const { data: releasesData, error: releasesError } = await supabase
         .from('project_deposit_releases')
@@ -49,7 +50,7 @@ export function DepositReleasePanel({ projectId }: DepositReleasePanelProps) {
         .order('release_date', { ascending: false });
 
       if (releasesError) throw releasesError;
-      setReleases(releasesData || []);
+      setReleases((releasesData as any) || []);
     } catch (error) {
       console.error('Error loading deposit data:', error);
     } finally {

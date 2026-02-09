@@ -1,12 +1,10 @@
-import { useEffect, useRef, useState, useMemo, useCallback } from 'react';
-import { MapPin, AlertCircle, RefreshCw } from 'lucide-react';
-import { supabase } from '../../lib/supabase';
+import { useEffect, useRef, useState, useMemo } from 'react';
+import { MapPin, AlertCircle } from 'lucide-react';
 import { loadGoogleMaps } from '../../lib/googleMapsLoader';
 import { MarkerClusterer } from '@googlemaps/markerclusterer';
 import type { Database } from '../../lib/database.types';
 import type { TechnicianMapData } from '../../types/map.types';
 import { getStatusColor } from '../../types/map.types';
-import { GeocodingService } from '../../services/GeocodingService';
 
 type Ticket = Database['public']['Tables']['tickets']['Row'] & {
   customers?: {
@@ -51,14 +49,12 @@ export function CallMapGoogle({
   const [markerClusterer, setMarkerClusterer] = useState<MarkerClusterer | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [geocoding, setGeocoding] = useState(false);
-  const [geocodeProgress, setGeocodeProgress] = useState<string | null>(null);
 
   // Memoize filtered tickets to prevent infinite loop in useEffect
   const activeTickets = useMemo(() => {
     return tickets.filter((ticket) => {
       // Exclude completed, cancelled, closed tickets
-      if (['completed', 'cancelled', 'closed_billed'].includes(ticket.status)) {
+      if (!ticket.status || ['completed', 'cancelled', 'closed_billed'].includes(ticket.status)) {
         return false;
       }
       // Apply status filter from dropdown
@@ -99,51 +95,6 @@ export function CallMapGoogle({
   const techniciansWithLocation = useMemo(() => {
     return technicians.filter(tech => tech.location !== null);
   }, [technicians]);
-
-  // Get unique customer IDs that need geocoding
-  const customerIdsToGeocode = useMemo(() => {
-    return Array.from(
-      new Set(
-        ticketsWithoutCoords
-          .filter(t => t.customer_id)
-          .map(t => t.customer_id!)
-      )
-    );
-  }, [ticketsWithoutCoords]);
-
-  // Geocode missing customer addresses
-  const handleGeocodeCustomers = useCallback(async () => {
-    if (customerIdsToGeocode.length === 0) return;
-
-    setGeocoding(true);
-    setGeocodeProgress(`Starting geocoding for ${customerIdsToGeocode.length} customers...`);
-
-    try {
-      const result = await GeocodingService.batchGeocodeCustomers(
-        customerIdsToGeocode,
-        (completed, total, _current) => {
-          setGeocodeProgress(`Geocoding ${completed}/${total} customers...`);
-        }
-      );
-
-      if (result.successful > 0) {
-        setGeocodeProgress(
-          `Done! ${result.successful} geocoded, ${result.failed} failed. Refreshing map...`
-        );
-        // Trigger a page reload to refresh the data
-        setTimeout(() => {
-          window.location.reload();
-        }, 2000);
-      } else {
-        setGeocodeProgress(`Geocoding failed for all ${result.failed} customers.`);
-      }
-    } catch (error) {
-      console.error('Geocoding error:', error);
-      setGeocodeProgress('Geocoding failed. Please try again.');
-    }
-
-    setGeocoding(false);
-  }, [customerIdsToGeocode]);
 
   useEffect(() => {
     console.log('Initializing map from useEffect');
@@ -263,7 +214,7 @@ export function CallMapGoogle({
           closed_billed: '#10b981',
         };
 
-        const color = statusColors[ticket.status] || '#6b7280';
+        const color = statusColors[ticket.status ?? ''] || '#6b7280';
 
         const priorityScales: Record<string, number> = {
           urgent: 1.5,
@@ -272,7 +223,7 @@ export function CallMapGoogle({
           low: 0.8,
         };
 
-        const scale = priorityScales[ticket.priority] || 1.0;
+        const scale = priorityScales[ticket.priority ?? ''] || 1.0;
 
         try {
           const marker = new google.maps.Marker({
@@ -404,8 +355,8 @@ export function CallMapGoogle({
       closed_billed: '#10b981',
     };
 
-    const statusLabel = statusLabels[ticket.status] || ticket.status;
-    const statusColor = statusColors[ticket.status] || '#6b7280';
+    const statusLabel = statusLabels[ticket.status ?? ''] || ticket.status;
+    const statusColor = statusColors[ticket.status ?? ''] || '#6b7280';
 
     return `
       <div style="padding: 12px; min-width: 250px; max-width: 350px;">

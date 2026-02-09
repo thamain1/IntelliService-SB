@@ -148,12 +148,14 @@ export function AdjustmentForm({
     setLoading(true);
 
     try {
-      await ReconciliationService.createAdjustment(reconciliationId, {
+      await ReconciliationService.createAdjustment({
+        reconciliation_id: reconciliationId,
         adjustment_type: adjustmentType,
         amount: amountNum,
         description: description.trim(),
         debit_account_id: debitAccountId,
         credit_account_id: creditAccountId,
+        entry_date: new Date().toISOString().split('T')[0],
       });
 
       onAdjustmentCreated();

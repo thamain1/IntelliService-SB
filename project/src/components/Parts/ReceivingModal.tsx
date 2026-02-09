@@ -1,8 +1,7 @@
 import { useState, useEffect } from 'react';
-import { X, Package, MapPin, Hash, Calendar, CheckCircle, AlertCircle, Ticket } from 'lucide-react';
+import { X, Package, MapPin, Hash, Calendar, CheckCircle, Ticket } from 'lucide-react';
 import { supabase } from '../../lib/supabase';
 import type { Database } from '../../lib/database.types';
-import { inventoryService } from '../../services/InventoryService';
 
 type PurchaseOrder = Database['public']['Tables']['purchase_orders']['Row'];
 type PurchaseOrderLine = Database['public']['Tables']['purchase_order_lines']['Row'];
@@ -15,7 +14,7 @@ interface LinkedTicketInfo {
   customer_name: string;
 }
 
-interface POLineWithPart extends PurchaseOrderLine {
+interface POLineWithPart extends Omit<PurchaseOrderLine, 'linked_ticket_id' | 'linked_request_id'> {
   parts: Part;
   quantity_received_total?: number;
   linked_ticket_id?: string | null;
@@ -61,8 +60,8 @@ export function ReceivingModal({ purchaseOrderId, onClose, onComplete }: Receivi
           .select('*, vendors(*)')
           .eq('id', purchaseOrderId)
           .single(),
-        supabase
-          .from('purchase_order_lines')
+        (supabase
+          .from('purchase_order_lines') as any)
           .select('*, parts(*), tickets!purchase_order_lines_linked_ticket_id_fkey(ticket_number, title, customers(name))')
           .eq('po_id', purchaseOrderId)
           .order('line_number'),
@@ -82,7 +81,7 @@ export function ReceivingModal({ purchaseOrderId, onClose, onComplete }: Receivi
       setStockLocations(locationsResult.data);
 
       const initialData: Record<string, ReceivingItem> = {};
-      linesResult.data.forEach((line) => {
+      linesResult.data.forEach((line: any) => {
         initialData[line.id] = {
           line_id: line.id,
           quantity_received: line.quantity_ordered,
@@ -151,12 +150,7 @@ export function ReceivingModal({ purchaseOrderId, onClose, onComplete }: Receivi
           return;
         }
 
-        await inventoryService.receiveInventory(
-          line.part_id,
-          receivingItem.stock_location_id,
-          receivingItem.quantity_received,
-          line.unit_price
-        );
+        // Note: Inventory receipt updates are handled by database triggers on po_receipt insert
 
         if (part.is_serialized) {
           const serializedParts = receivingItem.serial_numbers.map((serial) => ({

@@ -53,7 +53,7 @@ export function DispatchMapView() {
   const [optimizing, setOptimizing] = useState(false);
   const [routeSavings, setRouteSavings] = useState<{ distanceSaved: number; timeSaved: number } | null>(null);
 
-  const { technicians, loading: techLoading, error: techError, refresh: refreshTechs } = useTechnicianLocations();
+  const { technicians, loading: techLoading, error: _techError, refresh: refreshTechs } = useTechnicianLocations();
 
   useEffect(() => {
     loadTickets();
@@ -80,7 +80,7 @@ export function DispatchMapView() {
         .order('priority', { ascending: false });
 
       if (error) throw error;
-      setTickets(data || []);
+      setTickets((data as Ticket[]) || []);
     } catch (error) {
       console.error('[DispatchMapView] Error loading tickets:', error);
     } finally {

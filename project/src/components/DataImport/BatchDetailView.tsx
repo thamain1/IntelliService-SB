@@ -549,7 +549,7 @@ function PreviewTab({ previewRows, entityType }: { previewRows: any[]; entityTyp
   );
 }
 
-function ErrorsTab({ errorRows, entityType }: { errorRows: any[]; entityType: string }) {
+function ErrorsTab({ errorRows }: { errorRows: any[]; entityType: string }) {
   if (errorRows.length === 0) {
     return (
       <div className="text-center py-12">

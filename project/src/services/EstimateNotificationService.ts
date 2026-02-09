@@ -23,7 +23,7 @@ export class EstimateNotificationService {
    */
   static async onEstimateAccepted(
     estimateId: string,
-    acceptedBy?: string
+    _acceptedBy?: string
   ): Promise<void> {
     try {
       // Get estimate details
@@ -95,7 +95,7 @@ export class EstimateNotificationService {
    */
   static async onEstimateDeclined(
     estimateId: string,
-    declinedBy?: string,
+    _declinedBy?: string,
     reason?: string
   ): Promise<void> {
     try {
@@ -135,12 +135,12 @@ export class EstimateNotificationService {
     estimateId: string
   ): Promise<EstimateAcceptanceDetails | null> {
     try {
-      const { data, error } = await supabase
-        .from('estimates')
+      const { data, error } = await (supabase
+        .from('estimates') as any)
         .select(`
           id,
           estimate_number,
-          total,
+          total_amount,
           accepted_at,
           decision_by,
           ticket_id,
@@ -155,18 +155,18 @@ export class EstimateNotificationService {
         return null;
       }
 
-      const customer = data.customer as any;
-      const ticket = data.ticket as any;
+      const customer = (data as any)?.customer as any;
+      const ticket = (data as any)?.ticket as any;
 
       return {
-        estimateId: data.id,
-        estimateNumber: data.estimate_number,
-        ticketId: data.ticket_id,
+        estimateId: (data as any)?.id,
+        estimateNumber: (data as any)?.estimate_number,
+        ticketId: (data as any)?.ticket_id,
         ticketNumber: ticket?.ticket_number || null,
         customerName: customer?.company_name || 'Unknown Customer',
-        total: data.total || 0,
-        acceptedAt: data.accepted_at || new Date().toISOString(),
-        acceptedBy: data.decision_by,
+        total: (data as any)?.total_amount || 0,
+        acceptedAt: (data as any)?.accepted_at || new Date().toISOString(),
+        acceptedBy: (data as any)?.decision_by,
         isAHSTicket: AHSTicketService.isAHSTicket(ticket?.ticket_type),
         ahsCoveredAmount: null,
         customerResponsibility: null,

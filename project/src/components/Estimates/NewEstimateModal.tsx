@@ -254,7 +254,7 @@ export function NewEstimateModal({
 
       // Create estimate
       const { data: estimate, error: estimateError } = await supabase
-        .from('estimates')
+        .from('estimates' as any)
         .insert({
           customer_id: formData.customer_id,
           site_location: formData.site_location || null,
@@ -272,7 +272,7 @@ export function NewEstimateModal({
           created_by: profile?.id,
         })
         .select()
-        .single();
+        .single() as any;
 
       if (estimateError) throw estimateError;
 
@@ -280,7 +280,7 @@ export function NewEstimateModal({
       const lineItemsToInsert = lineItems
         .filter(item => item.description && item.description.trim() !== '')
         .map((item, index) => ({
-          estimate_id: estimate.id,
+          estimate_id: (estimate as any).id,
           line_order: index,
           item_type: item.item_type,
           description: item.description,
@@ -297,7 +297,7 @@ export function NewEstimateModal({
       console.log('Line items to insert after filter:', lineItemsToInsert);
 
       if (lineItemsToInsert.length > 0) {
-        const { data: insertedItems, error: lineItemsError } = await supabase
+        const { data: _insertedItems, error: lineItemsError } = await supabase
           .from('estimate_line_items')
           .insert(lineItemsToInsert)
           .select();
@@ -307,7 +307,7 @@ export function NewEstimateModal({
           throw lineItemsError;
         }
 
-        console.log('Inserted line items:', insertedItems);
+        console.log('Inserted line items:', _insertedItems);
       } else {
         console.warn('No line items to insert - all items filtered out');
       }
@@ -345,9 +345,9 @@ export function NewEstimateModal({
 
       // Pass estimate data to trigger Send modal
       onSuccess({
-        estimateId: estimate.id,
-        estimateNumber: estimate.estimate_number,
-        customerId: estimate.customer_id,
+        estimateId: (estimate as any).id,
+        estimateNumber: (estimate as any).estimate_number,
+        customerId: (estimate as any).customer_id,
         customerEmail: customer?.email || null,
         customerPhone: customer?.phone || null,
       });
@@ -470,7 +470,7 @@ export function NewEstimateModal({
             </div>
 
             <div className="space-y-3">
-              {lineItems.map((item, index) => (
+              {lineItems.map((item, _index) => (
                 <div key={item.id} className="card p-4 bg-gray-50 dark:bg-gray-700/50">
                   <div className="grid grid-cols-1 md:grid-cols-12 gap-3">
                     <div className="md:col-span-2">

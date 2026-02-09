@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { PackageCheck, Plus, Search, Calendar, Package, Wrench } from 'lucide-react';
+import { PackageCheck, Plus, Search, Calendar, Package } from 'lucide-react';
 import { supabase } from '../../lib/supabase';
 import type { Database } from '../../lib/database.types';
 import { ReceivingModal } from './ReceivingModal';
@@ -23,7 +23,6 @@ export function PartsReceivingView({ itemType = 'part', onNavigateToOrders }: Pa
   const isTool = itemType === 'tool';
   const itemLabel = isTool ? 'Tool' : 'Part';
   const itemLabelPlural = isTool ? 'Tools' : 'Parts';
-  const ItemIcon = isTool ? Wrench : Package;
   const [searchTerm, setSearchTerm] = useState('');
   const [purchaseOrders, setPurchaseOrders] = useState<PurchaseOrderWithVendor[]>([]);
   const [loading, setLoading] = useState(true);
@@ -83,7 +82,7 @@ export function PartsReceivingView({ itemType = 'part', onNavigateToOrders }: Pa
     }
   };
 
-  const getStatusBadge = (status: string) => {
+  const getStatusBadge = (status: string | null) => {
     const badges: Record<string, string> = {
       draft: 'bg-gray-100 text-gray-800 dark:bg-gray-800 dark:text-gray-300',
       submitted: 'bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-400',
@@ -92,7 +91,7 @@ export function PartsReceivingView({ itemType = 'part', onNavigateToOrders }: Pa
       received: 'bg-gray-100 text-gray-800 dark:bg-gray-800 dark:text-gray-300',
       cancelled: 'bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-400',
     };
-    return badges[status] || badges.draft;
+    return badges[status || ''] || badges.draft;
   };
 
   const formatDate = (dateString: string | null) => {
@@ -240,7 +239,7 @@ export function PartsReceivingView({ itemType = 'part', onNavigateToOrders }: Pa
                           order.status
                         )}`}
                       >
-                        {order.status.charAt(0).toUpperCase() + order.status.slice(1)}
+                        {((order.status ?? 'draft').charAt(0).toUpperCase() + (order.status ?? 'draft').slice(1))}
                       </span>
                     </td>
                     <td className="px-4 py-3">

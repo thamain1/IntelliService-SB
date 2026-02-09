@@ -1,7 +1,6 @@
 import { supabase } from '../lib/supabase';
 import type { Database } from '../lib/database.types';
 
-type PartInventory = Database['public']['Tables']['part_inventory']['Row'];
 type StockLocation = Database['public']['Tables']['stock_locations']['Row'];
 
 export interface InventoryBalance {

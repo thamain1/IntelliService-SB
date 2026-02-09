@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import { CheckCircle, AlertCircle, Loader } from 'lucide-react';
 import { ImportEntityType, DataImportService, ImportBatch } from '../../services/DataImportService';
 import { supabase } from '../../lib/supabase';
@@ -147,14 +147,14 @@ export function StepImport({
           await supabase
             .from('customers')
             .update({
-              name: row.name,
-              email: row.email || '',
-              phone: row.phone || '',
-              address: row.address || '',
-              city: row.city || '',
-              state: row.state || '',
-              zip_code: row.zip_code || '',
-              notes: row.notes || '',
+              name: row.name ?? undefined,
+              email: row.email ?? undefined,
+              phone: row.phone ?? undefined,
+              address: row.address ?? undefined,
+              city: row.city ?? undefined,
+              state: row.state ?? undefined,
+              zip_code: row.zip_code ?? undefined,
+              notes: row.notes ?? undefined,
             })
             .eq('id', existingCustomer.id);
 
@@ -172,18 +172,18 @@ export function StepImport({
           const { data: newCustomer, error: insertError } = await supabase
             .from('customers')
             .insert([{
-              name: row.name,
-              email: row.email || '',
-              phone: row.phone || '',
-              address: row.address || '',
-              city: row.city || '',
-              state: row.state || '',
-              zip_code: row.zip_code || '',
-              notes: row.notes || '',
+              name: row.name ?? 'Imported Customer',
+              email: row.email ?? undefined,
+              phone: row.phone ?? undefined,
+              address: row.address ?? undefined,
+              city: row.city ?? undefined,
+              state: row.state ?? undefined,
+              zip_code: row.zip_code ?? undefined,
+              notes: row.notes ?? undefined,
               external_customer_id: row.external_customer_id,
               import_batch_id: importBatch.id,
               imported_at: new Date().toISOString(),
-            }])
+            } as any])
             .select()
             .single();
 
@@ -271,7 +271,7 @@ export function StepImport({
         const { data: customer } = await supabase
           .from('customers')
           .select('id')
-          .eq('external_customer_id', row.external_customer_id)
+          .eq('external_customer_id', row.external_customer_id ?? '')
           .maybeSingle();
 
         if (!customer) {
@@ -282,7 +282,7 @@ export function StepImport({
         const { data: existingInvoice } = await supabase
           .from('invoices')
           .select('id')
-          .eq('external_invoice_number', row.external_invoice_number)
+          .eq('external_invoice_number', row.external_invoice_number ?? '')
           .eq('customer_id', customer.id)
           .maybeSingle();
 
@@ -300,21 +300,21 @@ export function StepImport({
           .from('invoices')
           .insert([{
             customer_id: customer.id,
-            invoice_number: row.external_invoice_number || `INV-${Date.now()}`,
+            invoice_number: row.external_invoice_number ?? `INV-${Date.now()}`,
             external_invoice_number: row.external_invoice_number,
-            issue_date: row.issue_date || new Date().toISOString().split('T')[0],
-            due_date: row.due_date || new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
-            subtotal: row.invoice_amount || row.balance_due || 0,
+            issue_date: row.issue_date ?? new Date().toISOString().split('T')[0],
+            due_date: row.due_date ?? new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
+            subtotal: (row.invoice_amount ?? row.balance_due) ?? 0,
             tax_amount: 0,
-            total_amount: row.invoice_amount || row.balance_due || 0,
-            balance_due: row.balance_due || 0,
-            status: row.balance_due > 0 ? 'sent' : 'paid',
+            total_amount: (row.invoice_amount ?? row.balance_due) ?? 0,
+            balance_due: row.balance_due ?? 0,
+            status: (row.balance_due ?? 0) > 0 ? 'sent' : 'paid',
             is_migrated_opening_balance: true,
             is_historical: false,
             import_batch_id: importBatch.id,
             imported_at: new Date().toISOString(),
             created_by: userId,
-          }])
+          } as any])
           .select()
           .single();
 
@@ -417,16 +417,16 @@ export function StepImport({
           await supabase
             .from('vendors')
             .update({
-              name: row.name,
-              email: row.email || '',
-              phone: row.phone || '',
-              address: row.address || '',
-              city: row.city || '',
-              state: row.state || '',
-              postal_code: row.postal_code || '',
-              payment_terms: row.payment_terms || '',
-              tax_id: row.tax_id || '',
-              notes: row.notes || '',
+              name: row.name ?? undefined,
+              email: row.email ?? undefined,
+              phone: row.phone ?? undefined,
+              address: row.address ?? undefined,
+              city: row.city ?? undefined,
+              state: row.state ?? undefined,
+              postal_code: row.postal_code ?? undefined,
+              payment_terms: row.payment_terms ?? undefined,
+              tax_id: row.tax_id ?? undefined,
+              notes: row.notes ?? undefined,
             })
             .eq('id', existingVendor.id);
 
@@ -441,19 +441,19 @@ export function StepImport({
             .from('vendors')
             .insert([{
               name: row.name,
-              vendor_code: row.vendor_code || null,
-              email: row.email || '',
-              phone: row.phone || '',
-              address: row.address || '',
-              city: row.city || '',
-              state: row.state || '',
-              postal_code: row.postal_code || '',
-              payment_terms: row.payment_terms || '',
-              tax_id: row.tax_id || '',
-              notes: row.notes || '',
+              vendor_code: row.vendor_code ?? null,
+              email: row.email ?? undefined,
+              phone: row.phone ?? undefined,
+              address: row.address ?? undefined,
+              city: row.city ?? undefined,
+              state: row.state ?? undefined,
+              postal_code: row.postal_code ?? undefined,
+              payment_terms: row.payment_terms ?? undefined,
+              tax_id: row.tax_id ?? undefined,
+              notes: row.notes ?? undefined,
               external_vendor_id: row.external_vendor_id,
               import_batch_id: importBatch.id,
-            }])
+            } as any])
             .select()
             .single();
 
@@ -536,13 +536,13 @@ export function StepImport({
           await supabase
             .from('parts')
             .update({
-              name: row.name,
-              description: row.description || '',
-              category: row.category || '',
-              unit_cost: parseFloat(row.unit_cost) || 0,
-              unit_price: parseFloat(row.unit_price) || 0,
-              reorder_point: parseInt(row.reorder_point) || 0,
-            })
+              name: row.name ?? undefined,
+              description: row.description ?? undefined,
+              category: row.category ?? undefined,
+              unit_cost: row.unit_cost ? parseFloat(String(row.unit_cost)) : undefined,
+              unit_price: row.unit_price ? parseFloat(String(row.unit_price)) : undefined,
+              reorder_point: row.reorder_point ? parseInt(String(row.reorder_point)) : undefined,
+            } as any)
             .eq('id', existingPart.id);
 
           await supabase
@@ -556,15 +556,15 @@ export function StepImport({
             .from('parts')
             .insert([{
               name: row.name,
-              sku: row.sku || null,
-              description: row.description || '',
-              category: row.category || '',
-              unit_cost: parseFloat(row.unit_cost) || 0,
-              unit_price: parseFloat(row.unit_price) || 0,
-              reorder_point: parseInt(row.reorder_point) || 0,
+              sku: row.sku ?? null,
+              description: row.description ?? undefined,
+              category: row.category ?? undefined,
+              unit_cost: row.unit_cost ? parseFloat(String(row.unit_cost)) : (undefined as any),
+              unit_price: row.unit_price ? parseFloat(String(row.unit_price)) : (undefined as any),
+              reorder_point: row.reorder_point ? parseInt(String(row.reorder_point)) : (undefined as any),
               external_item_id: row.external_item_id,
               import_batch_id: importBatch.id,
-            }])
+            } as any])
             .select()
             .single();
 
@@ -637,32 +637,32 @@ export function StepImport({
         const { data: customer } = await supabase
           .from('customers')
           .select('id')
-          .eq('external_customer_id', row.external_customer_id)
+          .eq('external_customer_id', row.external_customer_id ?? '')
           .maybeSingle();
 
         if (!customer) {
           throw new Error(`Customer not found: ${row.external_customer_id}`);
         }
 
-        const recordType = row.record_type.toLowerCase();
+        const recordType = (row.record_type ?? '').toLowerCase();
 
         if (recordType === 'invoice') {
           const { data: newInvoice, error: insertError } = await supabase
             .from('invoices')
             .insert([{
               customer_id: customer.id,
-              invoice_number: row.document_number,
+              invoice_number: row.document_number ?? `INV-${Date.now()}`,
               external_invoice_number: row.document_number,
-              invoice_date: row.document_date,
-              due_date: row.due_date || row.document_date,
-              subtotal: parseFloat(row.amount) || 0,
-              total_amount: parseFloat(row.amount) || 0,
+              invoice_date: row.document_date ?? new Date().toISOString().split('T')[0],
+              due_date: (row.due_date ?? row.document_date) ?? new Date().toISOString().split('T')[0],
+              subtotal: row.amount ? parseFloat(String(row.amount)) : (undefined as any),
+              total_amount: row.amount ? parseFloat(String(row.amount)) : (undefined as any),
               balance_due: 0,
-              status: row.status || 'paid',
+              status: row.status ?? 'paid',
               is_historical: true,
               import_batch_id: importBatch.id,
               created_by: userId,
-            }])
+            } as any])
             .select()
             .single();
 
@@ -682,16 +682,16 @@ export function StepImport({
             .from('tickets')
             .insert([{
               customer_id: customer.id,
-              title: row.description || 'Historical Service',
-              description: row.description || '',
-              status: row.status || 'completed',
-              priority: row.priority || 'medium',
-              ticket_type: row.ticket_type || 'service',
-              created_at: row.document_date,
-              completed_date: row.completed_date || row.document_date,
+              title: row.description ?? 'Historical Service',
+              description: row.description ?? undefined,
+              status: row.status ?? 'completed',
+              priority: row.priority ?? 'medium',
+              ticket_type: row.ticket_type ?? 'service',
+              created_at: row.document_date ?? new Date().toISOString(),
+              completed_date: row.completed_date ?? row.document_date,
               is_historical: true,
               import_batch_id: importBatch.id,
-            }])
+            } as any])
             .select()
             .single();
 

@@ -17,8 +17,8 @@ type Vendor = {
   account_number: string | null;
   payment_terms: string | null;
   notes: string | null;
-  is_active: boolean;
-  created_at: string;
+  is_active: boolean | null;
+  created_at: string | null;
 };
 
 export function VendorsView() {

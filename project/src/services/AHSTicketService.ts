@@ -316,7 +316,7 @@ export class AHSTicketService {
         oldValue: entry.old_value,
         newValue: entry.new_value,
         performedBy: (entry.performer as any)?.full_name || 'Unknown',
-        performedAt: entry.performed_at,
+        performedAt: entry.performed_at || new Date().toISOString(),
         notes: entry.notes,
       }));
     } catch (error) {

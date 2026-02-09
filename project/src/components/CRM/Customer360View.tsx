@@ -5,19 +5,17 @@ import {
   Mail,
   MapPin,
   Calendar,
-  DollarSign,
   Ticket,
   FileText,
   Wrench,
   MessageSquare,
-  Clock,
   TrendingUp,
   AlertTriangle,
   Plus,
-  ChevronRight,
   X,
 } from 'lucide-react';
-import { CRMService, Customer360, CustomerTimelineEvent } from '../../services/CRMService';
+import type { Customer360 } from '../../services/CRMService';
+import { CRMService as CRMServiceImpl } from '../../services/CRMService';
 import { NewInteractionModal } from './NewInteractionModal';
 
 interface Customer360ViewProps {
@@ -37,7 +35,7 @@ export function Customer360View({ customerId, onClose }: Customer360ViewProps) {
   const loadData = async () => {
     setLoading(true);
     try {
-      const customer360 = await CRMService.getCustomer360(customerId);
+      const customer360 = await CRMServiceImpl.getCustomer360(customerId);
       setData(customer360);
     } catch (err) {
       console.error('Failed to load customer 360:', err);
@@ -46,8 +44,8 @@ export function Customer360View({ customerId, onClose }: Customer360ViewProps) {
     }
   };
 
-  const getEventIcon = (type: string) => {
-    switch (type) {
+  const getEventIcon = (type: string | null) => {
+    switch (type ?? '') {
       case 'ticket':
         return Ticket;
       case 'estimate':
@@ -59,8 +57,8 @@ export function Customer360View({ customerId, onClose }: Customer360ViewProps) {
     }
   };
 
-  const getEventColor = (type: string) => {
-    switch (type) {
+  const getEventColor = (type: string | null) => {
+    switch (type ?? '') {
       case 'ticket':
         return 'bg-blue-100 dark:bg-blue-900/30 text-blue-600';
       case 'estimate':
@@ -278,7 +276,7 @@ export function Customer360View({ customerId, onClose }: Customer360ViewProps) {
                                     )}
                                   </span>
                                   <span className="text-xs text-gray-500">
-                                    {new Date(event.event_date).toLocaleDateString()}
+                                    {new Date(event.event_date ?? new Date()).toLocaleDateString()}
                                   </span>
                                 </div>
                                 {event.event_title && (

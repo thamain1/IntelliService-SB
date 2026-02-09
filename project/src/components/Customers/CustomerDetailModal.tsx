@@ -54,14 +54,14 @@ export function CustomerDetailModal({ customer, onClose, onEdit, onDelete }: Cus
   const loadServiceHistory = async () => {
     setLoading(true);
     try {
-      const { data, error } = await supabase
-        .from('tickets')
+      const { data, error } = await (supabase
+        .from('tickets') as any)
         .select('*, profiles:assigned_to(full_name)')
         .eq('customer_id', customer.id)
         .order('created_at', { ascending: false });
 
       if (error) throw error;
-      setTickets(data || []);
+      setTickets((data as unknown as Ticket[]) || []);
     } catch (error) {
       console.error('Error loading service history:', error);
     } finally {
@@ -81,7 +81,7 @@ export function CustomerDetailModal({ customer, onClose, onEdit, onDelete }: Cus
 
       if (error) throw error;
       console.log('Installed parts loaded:', data?.length || 0);
-      setInstalledParts(data || []);
+      setInstalledParts((data as InstalledPart[]) || []);
     } catch (error) {
       console.error('Error loading installed parts:', error);
       alert('Error loading installed parts: ' + (error as Error).message);
@@ -156,7 +156,7 @@ export function CustomerDetailModal({ customer, onClose, onEdit, onDelete }: Cus
             <div>
               <h3 className="text-lg md:text-2xl font-bold text-gray-900 dark:text-white">{customer.name}</h3>
               <p className="text-xs md:text-sm text-gray-600 dark:text-gray-400">
-                Customer since {new Date(customer.created_at).toLocaleDateString()}
+                Customer since {new Date(customer.created_at ?? new Date()).toLocaleDateString()}
               </p>
             </div>
           </div>
@@ -469,9 +469,9 @@ export function CustomerDetailModal({ customer, onClose, onEdit, onDelete }: Cus
                           </p>
                         </div>
                         <div className="flex flex-col items-end space-y-1">
-                          <span className={getStatusBadge(ticket.status)}>{ticket.status}</span>
-                          <span className={getPriorityBadge(ticket.priority)}>
-                            {ticket.priority}
+                          <span className={getStatusBadge(ticket.status ?? '')}>{ticket.status ?? ''}</span>
+                          <span className={getPriorityBadge(ticket.priority ?? '')}>
+                            {ticket.priority ?? ''}
                           </span>
                         </div>
                       </div>
@@ -498,7 +498,7 @@ export function CustomerDetailModal({ customer, onClose, onEdit, onDelete }: Cus
                               Scheduled: {new Date(ticket.scheduled_date).toLocaleDateString()}
                             </span>
                           ) : (
-                            <span>Created: {new Date(ticket.created_at).toLocaleDateString()}</span>
+                            <span>Created: {new Date(ticket.created_at ?? new Date()).toLocaleDateString()}</span>
                           )}
                         </div>
                       </div>

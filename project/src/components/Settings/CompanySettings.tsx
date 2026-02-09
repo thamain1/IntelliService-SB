@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { Building, Mail, Phone, MapPin, Globe, FileText, Save, Upload, AlertCircle } from 'lucide-react';
+import { Building, Mail, Phone, FileText, Save, Upload, AlertCircle } from 'lucide-react';
 import { supabase } from '../../lib/supabase';
 
 interface CompanySettingsData {
@@ -94,8 +94,8 @@ export function CompanySettings() {
             .eq('setting_key', key);
         } else {
           await supabase
-            .from('accounting_settings')
-            .insert({ setting_key: key, setting_value: value });
+            .from('accounting_settings' as any)
+            .insert({ setting_key: key, setting_value: value } as any);
         }
       }
 

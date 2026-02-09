@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { Calendar, ChevronLeft, ChevronRight, List, Grid, Clock, X, LayoutGrid, Filter, Package, AlertCircle } from 'lucide-react';
+import { ChevronLeft, ChevronRight, List, Grid, Clock, X, LayoutGrid, Filter, Package, AlertCircle } from 'lucide-react';
 import { supabase } from '../../lib/supabase';
 import type { Database } from '../../lib/database.types';
 import { TicketDetailModal } from './TicketDetailModal';
@@ -54,7 +54,7 @@ export function DispatchView() {
       const { data, error } = await query;
 
       if (error) throw error;
-      setTickets(data || []);
+      setTickets((data as Ticket[]) || []);
     } catch (error) {
       console.error('Error loading tickets:', error);
     } finally {
@@ -350,7 +350,7 @@ export function DispatchView() {
                           setSelectedTicketId(ticket.id);
                         }}
                         className={`w-full text-left text-xs p-1 rounded border-l-2 ${getPriorityColor(
-                          ticket.priority
+                          ticket.priority ?? ''
                         )} ${
                           ticket.hold_active
                             ? 'bg-orange-50 dark:bg-orange-900/20 border-orange-400'
@@ -358,7 +358,7 @@ export function DispatchView() {
                         } hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors cursor-pointer`}
                       >
                         <div className="flex items-center space-x-1">
-                          <div className={`w-2 h-2 rounded-full ${getStatusColor(ticket.status)}`}></div>
+                          <div className={`w-2 h-2 rounded-full ${getStatusColor(ticket.status ?? '')}`}></div>
                           <span className="truncate text-gray-900 dark:text-white">
                             {ticket.ticket_number}
                           </span>
@@ -402,7 +402,7 @@ export function DispatchView() {
                 >
                   <div className="flex-1">
                     <div className="flex items-center space-x-3">
-                      <div className={`w-3 h-3 rounded-full ${getStatusColor(ticket.status)}`}></div>
+                      <div className={`w-3 h-3 rounded-full ${getStatusColor(ticket.status ?? '')}`}></div>
                       <span className="font-medium text-gray-900 dark:text-white">
                         {ticket.ticket_number}
                       </span>
@@ -596,11 +596,11 @@ function DayScheduleView({ date, tickets, onClose, onTicketClick }: DayScheduleV
                             <div className="flex items-start justify-between">
                               <div className="flex-1">
                                 <div className="flex items-center space-x-3 mb-2">
-                                  <div className={`w-3 h-3 rounded-full ${getStatusColor(ticket.status)}`}></div>
+                                  <div className={`w-3 h-3 rounded-full ${getStatusColor(ticket.status ?? '')}`}></div>
                                   <span className="font-semibold text-gray-900 dark:text-white">
                                     {ticket.ticket_number}
                                   </span>
-                                  <span className={`text-xs px-2 py-1 rounded ${getPriorityBadge(ticket.priority)}`}>
+                                  <span className={`text-xs px-2 py-1 rounded ${getPriorityBadge(ticket.priority ?? '')}`}>
                                     {ticket.priority}
                                   </span>
                                 </div>

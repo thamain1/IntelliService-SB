@@ -519,7 +519,7 @@ export function ReportsView() {
                   outerRadius={100}
                   paddingAngle={2}
                   dataKey="value"
-                  label={({ name, percent }) => `${name} (${(percent * 100).toFixed(0)}%)`}
+                  label={({ name, percent }: any) => `${name ?? ''} (${((percent ?? 0) * 100).toFixed(0)}%)`}
                   labelLine={false}
                 >
                   {statusData.map((entry, index) => (
@@ -534,7 +534,7 @@ export function ReportsView() {
                   }}
                   itemStyle={{ color: '#F9FAFB' }}
                   labelStyle={{ color: '#F9FAFB' }}
-                  formatter={(value: number) => [value, 'Tickets']}
+                  formatter={(value: number | undefined) => [value ?? 0, 'Tickets']}
                 />
                 <Legend />
               </PieChart>

@@ -9,7 +9,7 @@ import {
   AlertCircle,
   Check,
 } from 'lucide-react';
-import { APService, Bill, CreatePaymentInput, PaymentMethod } from '../../services/APService';
+import { APService, Bill, CreatePaymentInput, PaymentMethod, PaymentAllocation } from '../../services/APService';
 import { supabase } from '../../lib/supabase';
 
 interface RecordPaymentModalProps {
@@ -249,7 +249,7 @@ export function RecordPaymentModal({
         allocations: selectedAllocations.map((a) => ({
           bill_id: a.bill.id,
           amount: a.amount,
-        })),
+        })) as Omit<PaymentAllocation, 'id' | 'payment_id'>[],
       };
 
       await APService.createPayment(input);

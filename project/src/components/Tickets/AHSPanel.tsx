@@ -8,7 +8,6 @@ import {
   Clock,
   Send,
   FileText,
-  AlertCircle,
   Loader2,
   History,
 } from 'lucide-react';

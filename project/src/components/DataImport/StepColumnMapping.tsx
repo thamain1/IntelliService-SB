@@ -148,7 +148,7 @@ export function StepColumnMapping({
 
     try {
       // Create import batch
-      const { delimiter, encoding } = DataImportService.detectFileFormat(fileContent);
+      const { encoding } = DataImportService.detectFileFormat(fileContent);
       const batch = await DataImportService.createImportBatch(
         entityType,
         file.name,
@@ -209,7 +209,7 @@ export function StepColumnMapping({
           throw new Error(`Unknown entity type: ${entityType}`);
         }
         const { data, error } = await supabase
-          .from(tableName)
+          .from(tableName as any)
           .insert([mappedRow])
           .select()
           .single();
@@ -223,7 +223,7 @@ export function StepColumnMapping({
             { error: error.message, row: rawRow }
           );
         } else if (data) {
-          stagingRowIds.push(data.id);
+          stagingRowIds.push((data as any).id);
         }
       }
 

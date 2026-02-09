@@ -36,14 +36,14 @@ export function WarehouseLocationsView() {
 
   const loadLocations = async () => {
     try {
-      const { data, error } = await supabase
-        .from('stock_locations')
+      const { data, error } = await (supabase
+        .from('stock_locations') as any)
         .select('*, profiles:technician_id(full_name)')
         .order('location_type', { ascending: true })
         .order('name', { ascending: true });
 
       if (error) throw error;
-      setLocations(data || []);
+      setLocations((data || []) as StockLocation[]);
     } catch (error) {
       console.error('Error loading warehouse locations:', error);
     } finally {
@@ -78,7 +78,7 @@ export function WarehouseLocationsView() {
         is_active: formData.is_active,
       };
 
-      if (formData.location_type === 'vehicle') {
+      if (formData.location_type === 'truck') {
         insertData.vehicle_id = formData.vehicle_id || null;
         insertData.technician_id = formData.technician_id || null;
       }
@@ -181,9 +181,9 @@ export function WarehouseLocationsView() {
           >
             <div className="flex items-start space-x-3">
               <div className={`p-3 rounded-lg ${
-                location.location_type === 'warehouse' || location.location_type === 'main_warehouse'
+                location.location_type === 'warehouse'
                   ? 'bg-blue-100 dark:bg-blue-900/20 text-blue-600'
-                  : location.location_type === 'truck' || location.location_type === 'vehicle'
+                  : location.location_type === 'truck'
                   ? 'bg-green-100 dark:bg-green-900/20 text-green-600'
                   : 'bg-yellow-100 dark:bg-yellow-900/20 text-yellow-600'
               }`}>
@@ -273,7 +273,7 @@ export function WarehouseLocationsView() {
                 />
               </div>
 
-              {(formData.location_type === 'truck' || formData.location_type === 'vehicle') && (
+              {formData.location_type === 'truck' && (
                 <>
                   <div>
                     <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
@@ -500,7 +500,7 @@ export function WarehouseLocationsView() {
                               </td>
                               <td className="px-6 py-4 whitespace-nowrap text-right">
                                 <span className="text-sm text-gray-900 dark:text-white">
-                                  ${item.parts?.unit_price.toFixed(2)}
+                                  ${(item.parts?.unit_price ?? 0).toFixed(2)}
                                 </span>
                               </td>
                               <td className="px-6 py-4 whitespace-nowrap text-right">

@@ -84,7 +84,7 @@ export function MappingView() {
         });
       }
 
-      setTickets(data || []);
+      setTickets((data as Ticket[]) || []);
     } catch (error) {
       console.error('[MappingView] Error loading tickets:', error);
     } finally {
@@ -103,24 +103,24 @@ export function MappingView() {
     completed: tickets.filter((t) => t.status === 'completed').length,
   };
 
-  const getStatusColor = (status: string) => {
+  const getStatusColor = (status: string | null) => {
     const colors: Record<string, string> = {
       open: 'bg-red-500',
       scheduled: 'bg-blue-500',
       in_progress: 'bg-yellow-500',
       completed: 'bg-green-500',
     };
-    return colors[status] || 'bg-gray-500';
+    return colors[status || ''] || 'bg-gray-500';
   };
 
-  const getPriorityIcon = (priority: string) => {
+  const getPriorityIcon = (priority: string | null) => {
     const sizes: Record<string, string> = {
       urgent: 'w-6 h-6',
       high: 'w-5 h-5',
       normal: 'w-4 h-4',
       low: 'w-3 h-3',
     };
-    return sizes[priority] || 'w-4 h-4';
+    return sizes[priority || ''] || 'w-4 h-4';
   };
 
   if (loading) {
@@ -231,7 +231,7 @@ export function MappingView() {
                       <span className="font-medium text-gray-900 dark:text-white">
                         {ticket.ticket_number}
                       </span>
-                      <span className="badge badge-gray capitalize">{ticket.status.replace('_', ' ')}</span>
+                      <span className="badge badge-gray capitalize">{(ticket.status ?? 'unknown').replace('_', ' ')}</span>
                     </div>
                     <p className="text-sm text-gray-700 dark:text-gray-300 mt-1">
                       {ticket.title}

@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
-import { Wrench, Clock, AlertTriangle, TrendingUp, Award } from 'lucide-react';
-import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, ScatterChart, Scatter, ZAxis, Legend } from 'recharts';
+import { Wrench, Clock, AlertTriangle, Award } from 'lucide-react';
+import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
 import { BIPageLayout } from './BIPageLayout';
 import { DateRangeSelector } from './DateRangeSelector';
 import { useBIDateRange } from '../../hooks/useBIDateRange';
@@ -59,7 +59,7 @@ export function EquipmentReliabilityReport() {
       // Get all equipment
       const { data: equipment, error: equipError } = await supabase
         .from('equipment')
-        .select('id, manufacturer, model_number, equipment_type, install_date');
+        .select('id, manufacturer, model_number, equipment_type');
 
       if (equipError) throw equipError;
 
@@ -84,7 +84,7 @@ export function EquipmentReliabilityReport() {
         if (!equipmentFailures[t.equipment_id]) {
           equipmentFailures[t.equipment_id] = [];
         }
-        equipmentFailures[t.equipment_id].push(new Date(t.created_at));
+        equipmentFailures[t.equipment_id].push(new Date(t.created_at ?? new Date()));
       });
 
       // Calculate MTBF per model
@@ -321,7 +321,7 @@ export function EquipmentReliabilityReport() {
                     />
                     <YAxis label={{ value: 'Days', angle: -90, position: 'insideLeft' }} />
                     <Tooltip
-                      formatter={(value: number) => [`${value.toFixed(0)} days`, 'Avg MTBF']}
+                      formatter={((value: number) => [`${value.toFixed(0)} days`, 'Avg MTBF']) as any}
                     />
                     <Bar dataKey="avg_mtbf" name="Avg MTBF" fill="#22c55e" />
                   </BarChart>

@@ -206,7 +206,7 @@ export function BillDetailModal({
   };
 
   const addLineItem = () => {
-    setEditLineItems([...editLineItems, { description: '', quantity: 1, unit_price: 0, amount: 0 }]);
+    setEditLineItems([...editLineItems, { description: '', quantity: 1, unit_price: 0, amount: 0 } as BillLineItem]);
   };
 
   const removeLineItem = (index: number) => {
@@ -226,8 +226,8 @@ export function BillDetailModal({
     setEditLineItems(updated);
   };
 
-  const getStatusBadge = (status: BillStatus) => {
-    const styles: Record<BillStatus, { bg: string; text: string; icon: any }> = {
+  const getStatusBadge = (status: BillStatus | string | null) => {
+    const styles: Record<string, { bg: string; text: string; icon: any }> = {
       draft: { bg: 'bg-gray-100 dark:bg-gray-700', text: 'text-gray-800 dark:text-gray-300', icon: Edit3 },
       received: { bg: 'bg-blue-100 dark:bg-blue-900/30', text: 'text-blue-800 dark:text-blue-400', icon: Clock },
       approved: { bg: 'bg-green-100 dark:bg-green-900/30', text: 'text-green-800 dark:text-green-400', icon: Check },
@@ -236,13 +236,14 @@ export function BillDetailModal({
       void: { bg: 'bg-red-100 dark:bg-red-900/30', text: 'text-red-800 dark:text-red-400', icon: Ban },
     };
 
-    const style = styles[status];
+    const displayStatus = status ?? 'draft';
+    const style = styles[displayStatus];
     const Icon = style.icon;
 
     return (
       <span className={`inline-flex items-center px-3 py-1 rounded-full text-sm font-medium ${style.bg} ${style.text}`}>
         <Icon className="w-4 h-4 mr-1" />
-        {status.charAt(0).toUpperCase() + status.slice(1)}
+        {displayStatus.charAt(0).toUpperCase() + displayStatus.slice(1)}
       </span>
     );
   };

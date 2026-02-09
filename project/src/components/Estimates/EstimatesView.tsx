@@ -53,8 +53,8 @@ export function EstimatesView({ onViewEstimate, onCreateEstimate }: EstimatesVie
 
   const loadEstimates = async () => {
     try {
-      const { data, error } = await supabase
-        .from('estimates')
+      const { data, error } = await (supabase
+        .from('estimates') as any)
         .select(`
           *,
           customers(name),
@@ -63,7 +63,7 @@ export function EstimatesView({ onViewEstimate, onCreateEstimate }: EstimatesVie
         .order('created_at', { ascending: false });
 
       if (error) throw error;
-      setEstimates(data || []);
+      setEstimates((data as unknown as any[]) || []);
     } catch (error) {
       console.error('Error loading estimates:', error);
     } finally {

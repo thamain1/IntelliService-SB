@@ -73,8 +73,8 @@ export function BillsView({ onNewBill, onViewBill, onRecordPayment }: BillsViewP
     setSearchQuery('');
   };
 
-  const getStatusBadge = (status: BillStatus) => {
-    const styles: Record<BillStatus, string> = {
+  const getStatusBadge = (status: BillStatus | string | null) => {
+    const styles: Record<string, string> = {
       draft: 'bg-gray-100 text-gray-800 dark:bg-gray-700 dark:text-gray-300',
       received: 'bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-400',
       approved: 'bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400',
@@ -83,9 +83,10 @@ export function BillsView({ onNewBill, onViewBill, onRecordPayment }: BillsViewP
       void: 'bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-400',
     };
 
+    const displayStatus = status ?? 'draft';
     return (
-      <span className={`px-2 py-1 rounded-full text-xs font-medium ${styles[status]}`}>
-        {status.charAt(0).toUpperCase() + status.slice(1)}
+      <span className={`px-2 py-1 rounded-full text-xs font-medium ${styles[displayStatus]}`}>
+        {displayStatus.charAt(0).toUpperCase() + displayStatus.slice(1)}
       </span>
     );
   };

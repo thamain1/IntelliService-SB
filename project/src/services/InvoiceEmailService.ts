@@ -210,7 +210,7 @@ Your Company`,
    * Open mailto link as fallback
    */
   static openMailtoLink(
-    data: InvoiceEmailData,
+    _data: InvoiceEmailData,
     composition: EmailComposition
   ): { success: boolean; message: string; method: 'mailto' } {
     const mailtoLink = `mailto:${encodeURIComponent(composition.to)}?subject=${encodeURIComponent(
@@ -278,13 +278,19 @@ Your Company`,
         customerEmail: customer?.email || '',
         totalAmount: invoice.total_amount,
         dueDate: invoice.due_date,
-        lineItems: lineItems || [],
+        lineItems: (lineItems || []).map((item: any) => ({
+          description: item.description,
+          quantity: item.quantity,
+          unit_price: item.unit_price,
+          line_total: item.line_total,
+          taxable: item.taxable ?? false,
+        })),
         subtotal: invoice.subtotal,
         taxRate: invoice.tax_rate,
         taxAmount: invoice.tax_amount,
         discountAmount: invoice.discount_amount,
         balanceDue: invoice.balance_due,
-        customerNotes: invoice.customer_notes,
+        customerNotes: invoice.customer_notes ?? undefined,
       };
     } catch (error) {
       console.error('Error loading invoice email data:', error);

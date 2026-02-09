@@ -1,8 +1,7 @@
 import { useEffect, useState } from 'react';
-import { Hash, Package, MapPin, Plus, Search, Calendar, Truck, CheckCircle, Wrench } from 'lucide-react';
+import { Hash, Package, MapPin, Plus, Search, Calendar, Truck, Wrench } from 'lucide-react';
 import { supabase } from '../../lib/supabase';
 import type { Database } from '../../lib/database.types';
-import { inventoryService } from '../../services/InventoryService';
 
 type SerializedPart = Database['public']['Tables']['serialized_parts']['Row'] & {
   parts?: { name: string; part_number: string; item_type: string };
@@ -34,8 +33,8 @@ export function SerializedPartsView({ itemType = 'part' }: SerializedPartsViewPr
 
   const loadSerializedParts = async () => {
     try {
-      let query = supabase
-        .from('serialized_parts')
+      let query = (supabase
+        .from('serialized_parts') as any)
         .select(`
           *,
           parts!inner(name, part_number, item_type),
@@ -50,14 +49,14 @@ export function SerializedPartsView({ itemType = 'part' }: SerializedPartsViewPr
         } else if (statusFilter === 'installed') {
           query = query.eq('status', 'installed');
         } else {
-          query = query.eq('status', statusFilter);
+          query = query.eq('status', statusFilter as string);
         }
       }
 
       const { data, error } = await query.order('created_at', { ascending: false });
 
       if (error) throw error;
-      setSerializedParts(data || []);
+      setSerializedParts((data || []) as any);
     } catch (error) {
       console.error('Error loading serialized parts:', error);
     } finally {
@@ -250,7 +249,7 @@ export function SerializedPartsView({ itemType = 'part' }: SerializedPartsViewPr
                           part.status as SerializedPartStatus
                         )}`}
                       >
-                        {formatStatus(part.status)}
+                        {formatStatus(part.status ?? 'in_stock')}
                       </span>
                     </td>
                     <td className="px-4 py-3 text-sm text-gray-900 dark:text-white">

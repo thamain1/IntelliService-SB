@@ -66,7 +66,7 @@ export function useTechnicianLocations(
               }
             : null;
 
-          const status = getTechnicianStatus(locationData?.timestamp);
+          const status = getTechnicianStatus(locationData?.timestamp ?? undefined);
 
           const activeTickets = (ticketData || []).map((ticket: any) => ({
             id: ticket.id,

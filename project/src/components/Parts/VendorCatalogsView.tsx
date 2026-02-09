@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { Package, Search, Filter, Star, DollarSign, Clock, Box } from 'lucide-react';
+import { Package, Search, Star, Clock } from 'lucide-react';
 import { PartsOrderingService, VendorCatalogItem } from '../../services/PartsOrderingService';
 import { supabase } from '../../lib/supabase';
 

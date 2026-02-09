@@ -242,7 +242,7 @@ export function RevenueTrendsInsight() {
                     }}
                     itemStyle={{ color: '#F9FAFB' }}
                     labelStyle={{ color: '#F9FAFB' }}
-                    formatter={(value: number) => [`$${value.toLocaleString()}`, 'Revenue']}
+                    formatter={((value: number) => [`$${value.toLocaleString()}`, 'Revenue']) as any}
                   />
                   <Area
                     type="monotone"
@@ -290,7 +290,7 @@ export function RevenueTrendsInsight() {
                     }}
                     itemStyle={{ color: '#F9FAFB' }}
                     labelStyle={{ color: '#F9FAFB' }}
-                    formatter={(value: number) => [value, 'Invoices']}
+                    formatter={((value: number) => [value, 'Invoices']) as any}
                   />
                   <Bar dataKey="invoiceCount" fill="#10B981" radius={[4, 4, 0, 0]} />
                 </BarChart>

@@ -337,12 +337,12 @@ export class PartsOrderingService {
         maxQty: data.max_qty,
         safetyStockQty: data.safety_stock_qty,
         leadDaysOverride: data.lead_days_override,
-        reviewPeriodDays: data.review_period_days,
-        reorderMethod: data.reorder_method,
-        isActive: data.is_active,
+        reviewPeriodDays: data.review_period_days ?? 7,
+        reorderMethod: (data.reorder_method ?? 'rop') as 'rop' | 'minmax',
+        isActive: data.is_active ?? true,
         notes: data.notes,
-        createdAt: data.created_at,
-        updatedAt: data.updated_at,
+        createdAt: data.created_at || new Date().toISOString(),
+        updatedAt: data.updated_at || new Date().toISOString(),
       };
     } catch (error) {
       console.error('Error in getReorderPolicy:', error);
@@ -388,12 +388,12 @@ export class PartsOrderingService {
         maxQty: data.max_qty,
         safetyStockQty: data.safety_stock_qty,
         leadDaysOverride: data.lead_days_override,
-        reviewPeriodDays: data.review_period_days,
-        reorderMethod: data.reorder_method,
-        isActive: data.is_active,
+        reviewPeriodDays: data.review_period_days ?? 7,
+        reorderMethod: (data.reorder_method ?? 'rop') as 'rop' | 'minmax',
+        isActive: data.is_active ?? true,
         notes: data.notes,
-        createdAt: data.created_at,
-        updatedAt: data.updated_at,
+        createdAt: data.created_at || new Date().toISOString(),
+        updatedAt: data.updated_at || new Date().toISOString(),
       };
     } catch (error) {
       console.error('Error in upsertReorderPolicy:', error);

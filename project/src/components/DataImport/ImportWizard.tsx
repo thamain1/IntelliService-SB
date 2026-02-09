@@ -1,6 +1,6 @@
 import { useState } from 'react';
-import { X, ArrowRight, ArrowLeft, CheckCircle, AlertCircle, Upload, FileText, Database } from 'lucide-react';
-import { DataImportService, ImportEntityType, ColumnMapping, ImportBatch } from '../../services/DataImportService';
+import { X, CheckCircle, AlertCircle, Upload, FileText, Database } from 'lucide-react';
+import type { ImportEntityType, ColumnMapping, ImportBatch } from '../../services/DataImportService';
 import { StepSelectType } from './StepSelectType';
 import { StepUploadFile } from './StepUploadFile';
 import { StepColumnMapping } from './StepColumnMapping';
@@ -19,7 +19,7 @@ export function ImportWizard({ onClose }: ImportWizardProps) {
   const [file, setFile] = useState<File | null>(null);
   const [fileContent, setFileContent] = useState<string>('');
   const [parsedRows, setParsedRows] = useState<any[]>([]);
-  const [columnMapping, setColumnMapping] = useState<ColumnMapping>({});
+  const [_columnMapping, setColumnMapping] = useState<ColumnMapping>({});
   const [importBatch, setImportBatch] = useState<ImportBatch | null>(null);
   const [stagingRowIds, setStagingRowIds] = useState<string[]>([]);
 
@@ -176,7 +176,7 @@ export function ImportWizard({ onClose }: ImportWizardProps) {
               entityType={entityType}
               importBatch={importBatch}
               stagingRowIds={stagingRowIds}
-              onNext={handleStepComplete}
+              onNext={() => handleStepComplete(null)}
               onBack={handleBack}
             />
           )}
@@ -185,7 +185,7 @@ export function ImportWizard({ onClose }: ImportWizardProps) {
             <StepImport
               entityType={entityType}
               importBatch={importBatch}
-              onComplete={handleStepComplete}
+              onComplete={() => handleStepComplete(null)}
               onBack={handleBack}
             />
           )}

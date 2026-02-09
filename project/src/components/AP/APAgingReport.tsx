@@ -42,12 +42,12 @@ export function APAgingReport({ onViewVendorBills }: APAgingReportProps) {
     const headers = ['Vendor', 'Current', '1-30 Days', '31-60 Days', '61-90 Days', 'Over 90', 'Total'];
     const rows = agingData.map((row) => [
       row.vendor_name,
-      row.current_amount.toFixed(2),
-      row.days_1_30.toFixed(2),
-      row.days_31_60.toFixed(2),
-      row.days_61_90.toFixed(2),
-      row.days_over_90.toFixed(2),
-      row.total_balance.toFixed(2),
+      (row.current_amount ?? 0).toFixed(2),
+      (row.days_1_30 ?? 0).toFixed(2),
+      (row.days_31_60 ?? 0).toFixed(2),
+      (row.days_61_90 ?? 0).toFixed(2),
+      (row.days_over_90 ?? 0).toFixed(2),
+      (row.total_balance ?? 0).toFixed(2),
     ]);
 
     rows.push([
@@ -204,7 +204,7 @@ export function APAgingReport({ onViewVendorBills }: APAgingReportProps) {
                 <tr
                   key={row.vendor_id}
                   className="hover:bg-gray-50 dark:hover:bg-gray-700 cursor-pointer"
-                  onClick={() => onViewVendorBills?.(row.vendor_id)}
+                  onClick={() => row.vendor_id && onViewVendorBills?.(row.vendor_id)}
                 >
                   <td className="px-6 py-4 whitespace-nowrap">
                     <div className="flex items-center">
@@ -219,23 +219,23 @@ export function APAgingReport({ onViewVendorBills }: APAgingReportProps) {
                       </div>
                     </div>
                   </td>
-                  <td className={`px-4 py-4 whitespace-nowrap text-sm text-right font-medium ${getAgingColor('current', row.current_amount)}`}>
-                    {row.current_amount > 0 ? formatCurrency(row.current_amount) : '-'}
+                  <td className={`px-4 py-4 whitespace-nowrap text-sm text-right font-medium ${getAgingColor('current', row.current_amount ?? 0)}`}>
+                    {(row.current_amount ?? 0) > 0 ? formatCurrency(row.current_amount ?? 0) : '-'}
                   </td>
-                  <td className={`px-4 py-4 whitespace-nowrap text-sm text-right font-medium ${getAgingColor('days_1_30', row.days_1_30)}`}>
-                    {row.days_1_30 > 0 ? formatCurrency(row.days_1_30) : '-'}
+                  <td className={`px-4 py-4 whitespace-nowrap text-sm text-right font-medium ${getAgingColor('days_1_30', row.days_1_30 ?? 0)}`}>
+                    {(row.days_1_30 ?? 0) > 0 ? formatCurrency(row.days_1_30 ?? 0) : '-'}
                   </td>
-                  <td className={`px-4 py-4 whitespace-nowrap text-sm text-right font-medium ${getAgingColor('days_31_60', row.days_31_60)}`}>
-                    {row.days_31_60 > 0 ? formatCurrency(row.days_31_60) : '-'}
+                  <td className={`px-4 py-4 whitespace-nowrap text-sm text-right font-medium ${getAgingColor('days_31_60', row.days_31_60 ?? 0)}`}>
+                    {(row.days_31_60 ?? 0) > 0 ? formatCurrency(row.days_31_60 ?? 0) : '-'}
                   </td>
-                  <td className={`px-4 py-4 whitespace-nowrap text-sm text-right font-medium ${getAgingColor('days_61_90', row.days_61_90)}`}>
-                    {row.days_61_90 > 0 ? formatCurrency(row.days_61_90) : '-'}
+                  <td className={`px-4 py-4 whitespace-nowrap text-sm text-right font-medium ${getAgingColor('days_61_90', row.days_61_90 ?? 0)}`}>
+                    {(row.days_61_90 ?? 0) > 0 ? formatCurrency(row.days_61_90 ?? 0) : '-'}
                   </td>
-                  <td className={`px-4 py-4 whitespace-nowrap text-sm text-right font-medium ${getAgingColor('over_90', row.days_over_90)}`}>
-                    {row.days_over_90 > 0 ? formatCurrency(row.days_over_90) : '-'}
+                  <td className={`px-4 py-4 whitespace-nowrap text-sm text-right font-medium ${getAgingColor('over_90', row.days_over_90 ?? 0)}`}>
+                    {(row.days_over_90 ?? 0) > 0 ? formatCurrency(row.days_over_90 ?? 0) : '-'}
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap text-sm text-right font-bold text-gray-900 dark:text-white">
-                    {formatCurrency(row.total_balance)}
+                    {formatCurrency(row.total_balance ?? 0)}
                   </td>
                 </tr>
               ))}

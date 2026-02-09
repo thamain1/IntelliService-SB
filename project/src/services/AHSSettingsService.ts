@@ -141,7 +141,7 @@ export class AHSSettingsService {
         oldValue: (entry.old_value as any)?.value || null,
         newValue: (entry.new_value as any)?.value || '',
         changedBy: (entry.performer as any)?.full_name || 'Unknown',
-        changedAt: entry.performed_at,
+        changedAt: entry.performed_at || new Date().toISOString(),
       }));
     } catch (error) {
       console.error('Error in getAHSSettingsHistory:', error);

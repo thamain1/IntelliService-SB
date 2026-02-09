@@ -5,15 +5,16 @@
 
 import { supabase } from '../lib/supabase';
 
-// Types
+// Types - allow nulls to match DB schema
 export interface DealPipeline {
   id: string;
   name: string;
-  description?: string;
-  is_default: boolean;
-  is_active: boolean;
-  sort_order: number;
-  created_at: string;
+  description: string | null;
+  is_default: boolean | null;
+  is_active: boolean | null;
+  sort_order: number | null;
+  created_at: string | null;
+  updated_at: string | null;
   stages?: DealStage[];
 }
 
@@ -21,97 +22,83 @@ export interface DealStage {
   id: string;
   pipeline_id: string;
   name: string;
-  description?: string;
-  probability: number;
-  sort_order: number;
-  is_won: boolean;
-  is_lost: boolean;
-  color: string;
-  created_at: string;
+  description: string | null;
+  probability: number | null;
+  sort_order: number | null;
+  is_won: boolean | null;
+  is_lost: boolean | null;
+  color: string | null;
+  created_at: string | null;
 }
 
 export interface CustomerInteraction {
   id: string;
   customer_id: string;
-  interaction_type: InteractionType;
-  direction?: 'inbound' | 'outbound';
-  subject?: string;
-  notes?: string;
-  duration_minutes?: number;
-  outcome?: string;
-  follow_up_date?: string;
-  related_ticket_id?: string;
-  related_estimate_id?: string;
-  created_by?: string;
-  created_at: string;
-  creator?: {
-    full_name: string;
-  };
+  interaction_type: string | null;
+  direction: string | null;
+  subject: string | null;
+  notes: string | null;
+  duration_minutes: number | null;
+  outcome: string | null;
+  follow_up_date: string | null;
+  related_ticket_id: string | null;
+  related_estimate_id: string | null;
+  created_by: string | null;
+  created_at: string | null;
+  creator?: { full_name: string } | null;
 }
 
 export interface CustomerTimelineEvent {
-  customer_id: string;
-  customer_name: string;
-  event_type: 'interaction' | 'ticket' | 'estimate';
-  event_id: string;
-  event_subtype: string;
-  event_title?: string;
-  event_description?: string;
-  event_date: string;
-  created_by_name?: string;
+  customer_id: string | null;
+  customer_name: string | null;
+  event_type: string | null;
+  event_id: string | null;
+  event_subtype: string | null;
+  event_title: string | null;
+  event_description: string | null;
+  event_date: string | null;
+  created_by_name: string | null;
 }
 
 export interface Lead {
-  id: string;
-  name: string;
-  email?: string;
-  phone?: string;
-  lead_source?: string;
-  created_at: string;
-  address?: string;
-  city?: string;
-  state?: string;
-  interaction_count: number;
-  last_interaction?: string;
-  estimate_count: number;
-  pending_estimate_value: number;
+  id: string | null;
+  name: string | null;
+  email: string | null;
+  phone: string | null;
+  lead_source: string | null;
+  created_at: string | null;
+  address: string | null;
+  city: string | null;
+  state: string | null;
+  interaction_count: number | null;
+  last_interaction: string | null;
+  estimate_count: number | null;
+  pending_estimate_value: number | null;
 }
 
 export interface SalesPipelineItem {
-  estimate_id: string;
-  estimate_number: string;
-  title: string;
-  total_amount: number;
-  status: string;
-  deal_stage_id: string;
-  stage_name: string;
-  probability: number;
-  stage_order: number;
-  pipeline_name: string;
-  expected_close_date?: string;
-  days_in_stage: number;
-  stage_entered_at?: string;
-  customer_id: string;
-  customer_name: string;
-  customer_phone?: string;
-  created_at: string;
-  updated_at: string;
+  estimate_id: string | null;
+  estimate_number: string | null;
+  title: string | null;
+  total_amount: number | null;
+  status: string | null;
+  deal_stage_id: string | null;
+  stage_name: string | null;
+  probability: number | null;
+  stage_order: number | null;
+  pipeline_name: string | null;
+  expected_close_date: string | null;
+  days_in_stage: number | null;
+  stage_entered_at: string | null;
+  customer_id: string | null;
+  customer_name: string | null;
+  customer_phone: string | null;
+  created_at: string | null;
+  updated_at: string | null;
 }
 
 export interface Customer360 {
-  customer: {
-    id: string;
-    name: string;
-    email?: string;
-    phone?: string;
-    address?: string;
-    city?: string;
-    state?: string;
-    status: string;
-    lead_source?: string;
-    prospect_replacement_flag: boolean;
-    created_at: string;
-  };
+  customer: any;
   stats: {
     total_tickets: number;
     open_tickets: number;
@@ -120,7 +107,7 @@ export interface Customer360 {
     total_revenue: number;
     lifetime_value: number;
     avg_ticket_value: number;
-    last_service_date?: string;
+    last_service_date?: string | null;
   };
   timeline: CustomerTimelineEvent[];
   equipment: any[];
@@ -162,7 +149,7 @@ export class CRMService {
     // Sort stages within each pipeline
     return (data || []).map(pipeline => ({
       ...pipeline,
-      stages: (pipeline.stages || []).sort((a: DealStage, b: DealStage) => a.sort_order - b.sort_order)
+      stages: (pipeline.stages || []).sort((a: DealStage, b: DealStage) => (a.sort_order ?? 0) - (b.sort_order ?? 0))
     }));
   }
 
@@ -404,7 +391,7 @@ export class CRMService {
 
     const stats = {
       total_tickets: ticketList.length,
-      open_tickets: ticketList.filter(t => !['completed', 'cancelled'].includes(t.status)).length,
+      open_tickets: ticketList.filter(t => !['completed', 'cancelled'].includes(t.status || '')).length,
       total_estimates: estimateList.length,
       pending_estimates: estimateList.filter(e => e.status === 'sent').length,
       total_revenue: invoiceList.reduce((sum, inv) => sum + (inv.total_amount || 0), 0),

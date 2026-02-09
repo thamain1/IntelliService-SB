@@ -97,31 +97,31 @@ export function ReorderAlertsView() {
     }
   };
 
-  const createPOFromAlert = async (alert: ReorderAlert) => {
-    if (!alert.vendorId) {
-      alert('No preferred vendor configured for this part. Please set up a vendor mapping first.');
+  const createPOFromAlert = async (reorderAlert: ReorderAlert) => {
+    if (!reorderAlert.vendorId) {
+      window.alert('No preferred vendor configured for this part. Please set up a vendor mapping first.');
       return;
     }
 
     try {
-      setCreatingPO(`${alert.partId}-${alert.locationId}`);
+      setCreatingPO(`${reorderAlert.partId}-${reorderAlert.locationId}`);
 
-      const { data, error } = await supabase.rpc('fn_create_po_from_alert', {
-        p_part_id: alert.partId,
-        p_location_id: alert.locationId,
-        p_quantity: Math.ceil(alert.suggestedOrderQty),
+      const { data: _poData, error } = await supabase.rpc('fn_create_po_from_alert', {
+        p_part_id: reorderAlert.partId,
+        p_location_id: reorderAlert.locationId,
+        p_quantity: Math.ceil(reorderAlert.suggestedOrderQty),
       });
 
       if (error) throw error;
 
-      setSuccessMessage(`PO created for ${alert.partNumber}`);
+      setSuccessMessage(`PO created for ${reorderAlert.partNumber}`);
       setTimeout(() => setSuccessMessage(null), 3000);
 
       // Refresh alerts
       loadAlerts();
     } catch (error: any) {
       console.error('Error creating PO:', error);
-      alert(error.message || 'Failed to create PO');
+      window.alert(error.message || 'Failed to create PO');
     } finally {
       setCreatingPO(null);
     }
@@ -131,7 +131,7 @@ export function ReorderAlertsView() {
     const alertsToProcess = alerts.filter(a => a.belowReorderPoint && a.vendorId);
 
     if (alertsToProcess.length === 0) {
-      alert('No alerts with configured vendors to generate POs for.');
+      window.alert('No alerts with configured vendors to generate POs for.');
       return;
     }
 
@@ -143,8 +143,8 @@ export function ReorderAlertsView() {
       setGeneratingAll(true);
 
       const { data, error } = await supabase.rpc('fn_generate_reorder_pos', {
-        p_location_id: selectedLocation !== 'all' ? selectedLocation : null,
-        p_vendor_id: selectedVendor !== 'all' ? selectedVendor : null,
+        p_location_id: selectedLocation !== 'all' ? selectedLocation : (undefined as any),
+        p_vendor_id: selectedVendor !== 'all' ? selectedVendor : (undefined as any),
       });
 
       if (error) throw error;

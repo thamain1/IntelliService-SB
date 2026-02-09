@@ -1,8 +1,8 @@
 import { useEffect, useState, useRef } from 'react';
-import { Clock, LogIn, LogOut, Calendar, User, CheckCircle, XCircle, MapPin, Edit, Plus, MapPinOff } from 'lucide-react';
+import { Clock, LogIn, LogOut, User, CheckCircle, XCircle, MapPin, MapPinOff } from 'lucide-react';
 import { supabase } from '../../lib/supabase';
 import { useAuth } from '../../contexts/AuthContext';
-import { GeolocationService, GeolocationPosition, GeolocationError } from '../../services/GeolocationService';
+import { GeolocationService, GeolocationPosition } from '../../services/GeolocationService';
 import type { Database } from '../../lib/database.types';
 
 type TimeLog = Database['public']['Tables']['time_logs']['Row'] & {
@@ -20,8 +20,6 @@ export function TimeClockView() {
   const [currentTime, setCurrentTime] = useState(new Date());
   const [filterDate, setFilterDate] = useState(new Date().toISOString().split('T')[0]);
   const [showAllUsers, setShowAllUsers] = useState(false);
-  const [showEditModal, setShowEditModal] = useState(false);
-  const [editingLog, setEditingLog] = useState<TimeLog | null>(null);
 
   // Location sharing state
   const [isLocationSharing, setIsLocationSharing] = useState(false);
@@ -116,7 +114,7 @@ export function TimeClockView() {
       const { data, error } = await query;
 
       if (error) throw error;
-      setTimeLogs(data || []);
+      setTimeLogs((data as any) || []);
     } catch (error) {
       console.error('Error loading time logs:', error);
     } finally {
@@ -138,7 +136,7 @@ export function TimeClockView() {
         .maybeSingle();
 
       if (error) throw error;
-      setActiveLog(data);
+      setActiveLog((data as any));
     } catch (error) {
       console.error('Error checking active log:', error);
     }
@@ -295,7 +293,7 @@ export function TimeClockView() {
     }
   };
 
-  const getStatusColor = (status: string) => {
+  const getStatusColor = (status: string | null) => {
     switch (status) {
       case 'active':
         return 'badge-green';
@@ -310,7 +308,7 @@ export function TimeClockView() {
     }
   };
 
-  const getTimeTypeColor = (type: string) => {
+  const getTimeTypeColor = (type: string | null) => {
     switch (type) {
       case 'regular':
         return 'text-blue-600';
@@ -620,7 +618,7 @@ export function TimeClockView() {
                     </td>
                     <td className="px-6 py-4">
                       <span className={`text-sm font-medium ${getTimeTypeColor(log.time_type)}`}>
-                        {log.time_type.replace('_', ' ')}
+                        {(log.time_type ?? 'work').replace('_', ' ')}
                       </span>
                     </td>
                     <td className="px-6 py-4">

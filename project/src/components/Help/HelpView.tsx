@@ -2,8 +2,6 @@ import { useState } from 'react';
 import {
   Book,
   Search,
-  ChevronDown,
-  ChevronRight,
   HelpCircle,
   Ticket,
   Calendar,
@@ -39,19 +37,9 @@ interface Section {
 export function HelpView() {
   const [activeSection, setActiveSection] = useState('getting-started');
   const [searchQuery, setSearchQuery] = useState('');
-  const [expandedSections, setExpandedSections] = useState<Set<string>>(new Set(['getting-started']));
+  const [_expandedSections, _setExpandedSections] = useState<Set<string>>(new Set(['getting-started']));
 
-  const toggleSection = (id: string) => {
-    setExpandedSections(prev => {
-      const next = new Set(prev);
-      if (next.has(id)) {
-        next.delete(id);
-      } else {
-        next.add(id);
-      }
-      return next;
-    });
-  };
+  // Unused - kept for future expandable sections functionality
 
   const sections: Section[] = [
     {
@@ -950,7 +938,6 @@ export function HelpView() {
                     key={section.id}
                     onClick={() => {
                       setActiveSection(section.id);
-                      toggleSection(section.id);
                     }}
                     className={`w-full flex items-center gap-3 px-3 py-2 text-sm rounded-lg transition-colors ${
                       isActive

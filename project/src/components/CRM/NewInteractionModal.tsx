@@ -5,7 +5,6 @@ import {
   Mail,
   MessageSquare,
   Calendar,
-  Clock,
   MapPin,
   FileText,
   AlertCircle,

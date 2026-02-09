@@ -224,7 +224,7 @@ export class NotificationService {
       const { data: users, error: usersError } = await supabase
         .from('profiles')
         .select('id')
-        .in('role', roles);
+        .in('role', roles as any);
 
       if (usersError) {
         console.error('Error fetching users for broadcast:', usersError);

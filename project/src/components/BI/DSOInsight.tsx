@@ -246,7 +246,7 @@ export function DSOInsight() {
                     }}
                     itemStyle={{ color: '#F9FAFB' }}
                     labelStyle={{ color: '#F9FAFB' }}
-                    formatter={(value: number) => [`$${value.toLocaleString()}`, 'Amount']}
+                    formatter={((value: number) => [`$${value.toLocaleString()}`, 'Amount']) as any}
                   />
                   <Bar dataKey="amount" radius={[4, 4, 0, 0]}>
                     {metrics.agingBuckets.map((_, index) => (

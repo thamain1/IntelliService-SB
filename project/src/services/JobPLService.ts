@@ -226,8 +226,8 @@ export class JobPLService {
     jobStatus: JobStatus,
     customerId?: string
   ): Promise<JobPLLine[]> {
-    let query = supabase
-      .from('tickets')
+    let query = (supabase
+      .from('tickets') as any)
       .select(
         `
         id,

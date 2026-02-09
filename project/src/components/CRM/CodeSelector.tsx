@@ -6,13 +6,14 @@ interface StandardCode {
   id: string;
   code: string;
   code_type: 'problem' | 'resolution';
-  label: string;
-  description?: string;
-  category?: string;
-  severity?: number;
-  triggers_sales_lead: boolean;
-  triggers_urgent_review: boolean;
-  is_critical_safety: boolean;
+  label?: string;
+  description?: string | null;
+  category?: string | null;
+  severity?: number | null;
+  triggers_sales_lead?: boolean | null;
+  triggers_urgent_review?: boolean | null;
+  is_critical_safety?: boolean | null;
+  is_active?: boolean | null;
 }
 
 interface CodeSelectorProps {
@@ -63,7 +64,7 @@ export function CodeSelector({
         .order('label');
 
       if (error) throw error;
-      setCodes(data || []);
+      setCodes((data as StandardCode[]) || []);
     } catch (err) {
       console.error('Failed to load codes:', err);
     } finally {
@@ -85,7 +86,7 @@ export function CodeSelector({
 
   const filteredCodes = codes.filter(
     (code) =>
-      code.label.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      code.label?.toLowerCase().includes(searchTerm.toLowerCase()) ||
       code.code.toLowerCase().includes(searchTerm.toLowerCase()) ||
       code.description?.toLowerCase().includes(searchTerm.toLowerCase())
   );

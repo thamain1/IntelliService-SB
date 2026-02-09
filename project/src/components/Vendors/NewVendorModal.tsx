@@ -74,8 +74,8 @@ export function NewVendorModal({ onClose, onSuccess }: NewVendorModalProps) {
       };
 
       const { error: vendorError } = await supabase
-        .from('vendors')
-        .insert([vendorData]);
+        .from('vendors' as any)
+        .insert([vendorData] as any);
 
       if (vendorError) throw vendorError;
 

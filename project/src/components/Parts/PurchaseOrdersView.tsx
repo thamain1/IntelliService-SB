@@ -148,9 +148,9 @@ export function PurchaseOrdersView({ itemType = 'part', linkedRequest, onClearLi
       if (vendorsResult.error) throw vendorsResult.error;
       if (partsResult.error) throw partsResult.error;
 
-      setPurchaseOrders(posResult.data || []);
-      setVendors(vendorsResult.data || []);
-      setParts(partsResult.data || []);
+      setPurchaseOrders((posResult.data as any) || []);
+      setVendors((vendorsResult.data as any) || []);
+      setParts((partsResult.data as any) || []);
     } catch (error) {
       console.error('Error loading data:', error);
     } finally {
@@ -252,7 +252,7 @@ export function PurchaseOrdersView({ itemType = 'part', linkedRequest, onClearLi
         linked_request_id: item.linked_request_id || null,
       }));
 
-      const { data: insertedLines, error: linesError } = await supabase
+      const { data: _insertedLines, error: linesError } = await supabase
         .from('purchase_order_lines')
         .insert(lineItemsToInsert)
         .select();
@@ -304,7 +304,7 @@ export function PurchaseOrdersView({ itemType = 'part', linkedRequest, onClearLi
     try {
       const { error } = await supabase
         .from('purchase_orders')
-        .update({ status: newStatus })
+        .update({ status: newStatus as any })
         .eq('id', poId);
 
       if (error) throw error;

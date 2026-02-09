@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { Plus, X, Mail, Phone, Shield, CheckCircle, XCircle, DollarSign, Edit2 } from 'lucide-react';
+import { Plus, X, Mail, Phone, CheckCircle, XCircle, DollarSign, Edit2 } from 'lucide-react';
 import { supabase } from '../../lib/supabase';
 import type { Database } from '../../lib/database.types';
 
@@ -366,7 +366,7 @@ export function UserManagement() {
                         <span>Edit</span>
                       </button>
                       <button
-                        onClick={() => handleToggleActive(user.id, user.is_active)}
+                        onClick={() => handleToggleActive(user.id, user.is_active ?? true)}
                         className={`btn ${
                           user.is_active ? 'btn-outline' : 'btn-primary'
                         } text-sm py-1 px-3`}

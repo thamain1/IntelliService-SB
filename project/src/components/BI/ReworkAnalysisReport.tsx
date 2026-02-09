@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
-import { RefreshCw, User, AlertTriangle, Clock, TrendingDown } from 'lucide-react';
-import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Legend, PieChart, Pie, Cell } from 'recharts';
+import { RefreshCw, User, Clock, TrendingDown } from 'lucide-react';
+import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, PieChart, Pie, Cell } from 'recharts';
 import { BIPageLayout } from './BIPageLayout';
 import { DateRangeSelector } from './DateRangeSelector';
 import { useBIDateRange } from '../../hooks/useBIDateRange';
@@ -90,9 +90,6 @@ export function ReworkAnalysisReport() {
       const techCallbacks: Record<string, { name: string; callbacks: number; completed: number }> = {};
       const resolutionFailures: Record<string, number> = {};
 
-      // Build a map of ticket info
-      const ticketMap = new Map(completedTickets?.map(t => [t.id, t]) || []);
-
       // Track tech completed counts
       completedTickets?.forEach(t => {
         if (t.assigned_to) {
@@ -127,7 +124,7 @@ export function ReworkAnalysisReport() {
         if (callbacks && callbacks.length > 0) {
           callbacks.forEach(callback => {
             const daysBetween = Math.floor(
-              (new Date(callback.created_at).getTime() - completedDate.getTime()) / (1000 * 60 * 60 * 24)
+              (new Date(callback.created_at ?? new Date()).getTime() - completedDate.getTime()) / (1000 * 60 * 60 * 24)
             );
 
             reworkRecords.push({
@@ -135,11 +132,11 @@ export function ReworkAnalysisReport() {
               original_ticket: original.ticket_number,
               original_problem: original.problem_code,
               original_resolution: original.resolution_code,
-              original_completed: original.completed_at,
+              original_completed: original.completed_at || new Date().toISOString(),
               callback_ticket_id: callback.id,
               callback_ticket: callback.ticket_number,
               callback_problem: callback.problem_code,
-              callback_date: callback.created_at,
+              callback_date: callback.created_at || new Date().toISOString(),
               technician_id: original.assigned_to,
               technician_name: (original.profiles as any)?.full_name || null,
               customer_name: (original.customers as any)?.name || null,
@@ -313,7 +310,7 @@ export function ReworkAnalysisReport() {
                       <XAxis type="number" domain={[0, 'auto']} unit="%" />
                       <YAxis dataKey="technician_name" type="category" tick={{ fontSize: 12 }} width={80} />
                       <Tooltip
-                        formatter={(value: number) => [`${value.toFixed(1)}%`, 'Callback Rate']}
+                        formatter={((value: number) => [`${value.toFixed(1)}%`, 'Callback Rate']) as any}
                         labelFormatter={(label) => `Tech: ${label}`}
                       />
                       <Bar dataKey="callback_rate" fill="#ef4444" name="Callback Rate" />
@@ -341,12 +338,12 @@ export function ReworkAnalysisReport() {
                         cx="50%"
                         cy="50%"
                         labelLine={false}
-                        label={({ name, percent }) => `${name.replace('RES-', '')} (${(percent * 100).toFixed(0)}%)`}
+                        label={({ name, percent }) => `${(name ?? '').replace('RES-', '')} (${((percent ?? 0) * 100).toFixed(0)}%)`}
                         outerRadius={80}
                         fill="#8884d8"
                         dataKey="value"
                       >
-                        {resolutionStats.map((entry, index) => (
+                        {resolutionStats.map((_, index) => (
                           <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
                         ))}
                       </Pie>

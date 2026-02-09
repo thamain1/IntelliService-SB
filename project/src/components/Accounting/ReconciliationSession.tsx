@@ -3,7 +3,6 @@ import {
   X,
   Check,
   RefreshCw,
-  Save,
   Ban,
   FileText,
   DollarSign,
@@ -18,7 +17,6 @@ import {
   GLEntryForReconciliation,
   BankStatementLine,
   ReconciliationAdjustment,
-  AdjustmentType,
 } from '../../services/ReconciliationService';
 import { BankStatementImport } from './BankStatementImport';
 import { TransactionMatcher } from './TransactionMatcher';
@@ -112,9 +110,10 @@ export function ReconciliationSession({
     if (!reconciliation) return;
 
     const tolerance = 0.01;
-    if (Math.abs(reconciliation.difference) > tolerance) {
+    const difference = reconciliation.difference ?? 0;
+    if (Math.abs(difference) > tolerance) {
       alert(
-        `Cannot complete: Difference of $${reconciliation.difference.toFixed(2)} exceeds tolerance. Please clear additional entries or create adjustments.`
+        `Cannot complete: Difference of $${difference.toFixed(2)} exceeds tolerance. Please clear additional entries or create adjustments.`
       );
       return;
     }
@@ -199,25 +198,25 @@ export function ReconciliationSession({
             <div>
               <p className="text-sm text-gray-600 dark:text-gray-400">Statement Balance</p>
               <p className="text-2xl font-bold text-gray-900 dark:text-white">
-                ${reconciliation.statement_ending_balance.toFixed(2)}
+                ${(reconciliation.statement_ending_balance ?? 0).toFixed(2)}
               </p>
             </div>
             <div>
               <p className="text-sm text-gray-600 dark:text-gray-400">Cleared Balance</p>
               <p className="text-2xl font-bold text-gray-900 dark:text-white">
-                ${reconciliation.cleared_balance.toFixed(2)}
+                ${(reconciliation.cleared_balance ?? 0).toFixed(2)}
               </p>
             </div>
             <div>
               <p className="text-sm text-gray-600 dark:text-gray-400">Difference</p>
               <p
                 className={`text-2xl font-bold ${
-                  Math.abs(reconciliation.difference) < 0.01
+                  Math.abs((reconciliation.difference ?? 0)) < 0.01
                     ? 'text-green-600 dark:text-green-400'
                     : 'text-red-600 dark:text-red-400'
                 }`}
               >
-                ${reconciliation.difference.toFixed(2)}
+                ${(reconciliation.difference ?? 0).toFixed(2)}
               </p>
             </div>
             <div>
@@ -229,7 +228,7 @@ export function ReconciliationSession({
                   <AlertCircle className="w-5 h-5 text-blue-600" />
                 )}
                 <span className="text-lg font-semibold text-gray-900 dark:text-white capitalize">
-                  {reconciliation.status.replace('_', ' ')}
+                  {(reconciliation.status ?? 'unknown').replace('_', ' ')}
                 </span>
               </div>
             </div>
@@ -318,6 +317,7 @@ export function ReconciliationSession({
             <BankStatementTab
               reconciliationId={reconciliationId}
               bankLines={bankLines}
+              glEntries={glEntries}
               onRefresh={loadReconciliationData}
               readOnly={isCompleted}
             />
@@ -364,7 +364,7 @@ export function ReconciliationSession({
                 <button
                   onClick={handleCompleteReconciliation}
                   className="btn btn-primary flex items-center space-x-2"
-                  disabled={!!actionInProgress || Math.abs(reconciliation.difference) > 0.01}
+                  disabled={!!actionInProgress || Math.abs(reconciliation.difference ?? 0) > 0.01}
                 >
                   <Check className="w-4 h-4" />
                   <span>Complete Reconciliation</span>
@@ -653,12 +653,12 @@ function BankStatementTab({
                       <td className="px-6 py-4 text-center">
                         <span
                           className={`inline-flex px-2 py-1 text-xs font-semibold rounded ${
-                            line.match_status === 'matched'
+                            (line.match_status ?? '') !== 'unmatched' && (line.match_status ?? '') !== ''
                               ? 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200'
                               : 'bg-gray-100 text-gray-800 dark:bg-gray-700 dark:text-gray-200'
                           }`}
                         >
-                          {line.match_status.replace('_', ' ')}
+                          {(line.match_status ?? 'unmatched').replace('_', ' ')}
                         </span>
                       </td>
                     </tr>
@@ -766,7 +766,7 @@ function AdjustmentsTab({
                     ${adj.amount.toFixed(2)}
                   </td>
                   <td className="px-6 py-4 text-sm text-gray-600 dark:text-gray-400 whitespace-nowrap">
-                    {new Date(adj.created_at).toLocaleDateString()}
+                    {new Date(adj.created_at ?? new Date()).toLocaleDateString()}
                   </td>
                 </tr>
               ))}
@@ -814,7 +814,7 @@ function SummaryTab({
           <div className="flex justify-between items-center pb-2 border-b border-gray-200 dark:border-gray-700">
             <span className="text-gray-600 dark:text-gray-400">Statement Ending Balance:</span>
             <span className="font-medium text-gray-900 dark:text-white">
-              ${reconciliation.statement_ending_balance.toFixed(2)}
+              ${(reconciliation.statement_ending_balance ?? 0).toFixed(2)}
             </span>
           </div>
 
@@ -826,7 +826,7 @@ function SummaryTab({
           <div className="flex justify-between items-center pb-2 border-b border-gray-200 dark:border-gray-700">
             <span className="text-gray-600 dark:text-gray-400">Cleared Balance:</span>
             <span className="font-medium text-gray-900 dark:text-white">
-              ${reconciliation.cleared_balance.toFixed(2)}
+              ${(reconciliation.cleared_balance ?? 0).toFixed(2)}
             </span>
           </div>
 
@@ -834,18 +834,18 @@ function SummaryTab({
             <span className="text-lg font-semibold text-gray-900 dark:text-white">Difference:</span>
             <span
               className={`text-2xl font-bold ${
-                Math.abs(reconciliation.difference) < 0.01
+                Math.abs((reconciliation.difference ?? 0)) < 0.01
                   ? 'text-green-600 dark:text-green-400'
                   : 'text-red-600 dark:text-red-400'
               }`}
             >
-              ${reconciliation.difference.toFixed(2)}
+              ${(reconciliation.difference ?? 0).toFixed(2)}
             </span>
           </div>
         </div>
       </div>
 
-      {Math.abs(reconciliation.difference) < 0.01 ? (
+      {Math.abs(reconciliation.difference ?? 0) < 0.01 ? (
         <div className="bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800 rounded-lg p-6">
           <div className="flex items-start space-x-3">
             <CheckCircle className="w-6 h-6 text-green-600 dark:text-green-400 flex-shrink-0 mt-0.5" />

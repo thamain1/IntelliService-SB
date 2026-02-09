@@ -25,7 +25,6 @@ export function TransactionMatcher({
   const [selectedBankLine, setSelectedBankLine] = useState<string | null>(null);
   const [selectedGLEntry, setSelectedGLEntry] = useState<string | null>(null);
   const [suggestions, setSuggestions] = useState<AutoMatchSuggestion[]>([]);
-  const [loadingSuggestions, setLoadingSuggestions] = useState(false);
   const [matching, setMatching] = useState(false);
 
   // Filter unmatched items
@@ -37,14 +36,11 @@ export function TransactionMatcher({
   }, [reconciliationId]);
 
   const loadSuggestions = async () => {
-    setLoadingSuggestions(true);
     try {
       const data = await ReconciliationService.getAutoMatchSuggestions(reconciliationId);
       setSuggestions(data);
     } catch (error) {
       console.error('Failed to load suggestions:', error);
-    } finally {
-      setLoadingSuggestions(false);
     }
   };
 
@@ -56,7 +52,7 @@ export function TransactionMatcher({
       await ReconciliationService.matchBankLineToGLEntry(
         selectedBankLine,
         selectedGLEntry,
-        reconciliationId
+        false
       );
 
       setSelectedBankLine(null);
@@ -82,7 +78,7 @@ export function TransactionMatcher({
           await ReconciliationService.matchBankLineToGLEntry(
             suggestion.bank_line_id,
             suggestion.gl_entry_id,
-            reconciliationId
+            true
           );
           matched++;
         } catch (error) {
@@ -118,7 +114,7 @@ export function TransactionMatcher({
       await ReconciliationService.matchBankLineToGLEntry(
         suggestion.bank_line_id,
         suggestion.gl_entry_id,
-        reconciliationId
+        true
       );
       onRefresh();
       loadSuggestions();
@@ -159,10 +155,10 @@ export function TransactionMatcher({
               >
                 <div className="flex items-center space-x-4 text-sm">
                   <span className="text-gray-600 dark:text-gray-400">
-                    {new Date(suggestion.bank_line_date).toLocaleDateString()}
+                    {new Date(suggestion.bank_line_date ?? new Date()).toLocaleDateString()}
                   </span>
                   <span className="font-medium text-gray-900 dark:text-white">
-                    ${Math.abs(suggestion.amount).toFixed(2)}
+                    ${Math.abs(suggestion.amount ?? 0).toFixed(2)}
                   </span>
                   <span className="text-gray-500 truncate max-w-xs">
                     {suggestion.bank_line_description}
@@ -357,7 +353,7 @@ export function TransactionMatcher({
       )}
 
       {/* Matched Transactions */}
-      {bankLines.filter((l) => l.match_status === 'matched').length > 0 && (
+      {bankLines.filter((l) => l.match_status === 'manually_matched' || l.match_status === 'auto_matched').length > 0 && (
         <div>
           <h4 className="font-semibold text-gray-900 dark:text-white mb-3">
             Matched Transactions
@@ -384,7 +380,7 @@ export function TransactionMatcher({
               </thead>
               <tbody className="bg-white dark:bg-gray-800 divide-y divide-gray-200 dark:divide-gray-700">
                 {bankLines
-                  .filter((l) => l.match_status === 'matched')
+                  .filter((l) => l.match_status === 'manually_matched' || l.match_status === 'auto_matched')
                   .map((line) => (
                     <tr key={line.id}>
                       <td className="px-4 py-2 text-sm">

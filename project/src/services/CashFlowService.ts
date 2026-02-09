@@ -84,7 +84,7 @@ export class CashFlowService {
 
     for (const balance of balances) {
       if (cashAccountIds.includes(balance.account_id)) {
-        totalCash += parseFloat(balance.balance || '0');
+        totalCash += Number(balance.balance) || 0;
       }
     }
 
@@ -364,8 +364,8 @@ export class CashFlowService {
       const account = (entry as any).chart_of_accounts;
       const isCash = cashAccountIds.includes(entry.account_id);
 
-      const debit = parseFloat(entry.debit_amount || '0');
-      const credit = parseFloat(entry.credit_amount || '0');
+      const debit = Number(entry.debit_amount) || 0;
+      const credit = Number(entry.credit_amount) || 0;
 
       let amount = 0;
       if (account.normal_balance === 'debit') {

@@ -7,7 +7,14 @@ type AccountingSetting = {
   setting_key: string;
   setting_value: string;
   display_name: string;
-  description: string;
+  description: string | null;
+  category?: string;
+  created_at?: string | null;
+  display_order?: number;
+  is_editable?: boolean;
+  setting_type?: "number" | "string" | "time" | "date";
+  updated_at?: string | null;
+  updated_by?: string | null;
 };
 
 export function LaborRatesSettings() {
@@ -43,7 +50,7 @@ export function LaborRatesSettings() {
 
       if (data) {
         const settingsMap: Record<string, AccountingSetting> = {};
-        data.forEach((setting) => {
+        data.forEach((setting: any) => {
           settingsMap[setting.setting_key] = setting;
         });
         setSettings(settingsMap);

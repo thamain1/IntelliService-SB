@@ -21,7 +21,6 @@ interface PartsManagementViewProps {
 
 export function PartsManagementView({ initialView, itemType = 'part' }: PartsManagementViewProps) {
   const isTool = itemType === 'tool';
-  const itemLabel = isTool ? 'Tool' : 'Part';
   const itemLabelPlural = isTool ? 'Tools' : 'Parts';
   const ItemIcon = isTool ? Wrench : Package;
   const getInitialTab = (): TabType => {

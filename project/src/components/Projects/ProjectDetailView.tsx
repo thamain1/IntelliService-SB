@@ -5,19 +5,15 @@ import {
   DollarSign,
   Users,
   Clock,
-  CheckCircle,
   AlertCircle,
   TrendingUp,
   Package,
   Wrench,
   Plus,
   X,
-  Edit,
   FileText,
   Kanban as KanbanIcon,
-  BarChart3,
   Building2,
-  CreditCard
 } from 'lucide-react';
 import { supabase } from '../../lib/supabase';
 import { NewTicketModal } from '../Tickets/NewTicketModal';
@@ -181,7 +177,7 @@ export function ProjectDetailView({ projectId, onBack }: ProjectDetailViewProps)
         .order('phase_order', { ascending: true });
 
       if (error) throw error;
-      setPhases(data || []);
+      setPhases((data as any) || []);
     } catch (error) {
       console.error('Error loading phases:', error);
     }
@@ -196,7 +192,7 @@ export function ProjectDetailView({ projectId, onBack }: ProjectDetailViewProps)
         .order('start_date', { ascending: true });
 
       if (error) throw error;
-      setTasks(data || []);
+      setTasks((data as any) || []);
     } catch (error) {
       console.error('Error loading tasks:', error);
     }
@@ -211,7 +207,7 @@ export function ProjectDetailView({ projectId, onBack }: ProjectDetailViewProps)
         .order('requested_date', { ascending: false });
 
       if (error) throw error;
-      setChangeOrders(data || []);
+      setChangeOrders((data as any) || []);
     } catch (error) {
       console.error('Error loading change orders:', error);
     }
@@ -226,7 +222,7 @@ export function ProjectDetailView({ projectId, onBack }: ProjectDetailViewProps)
         .order('created_at', { ascending: false});
 
       if (error) throw error;
-      setIssues(data || []);
+      setIssues((data as any) || []);
     } catch (error) {
       console.error('Error loading issues:', error);
     }
@@ -234,8 +230,8 @@ export function ProjectDetailView({ projectId, onBack }: ProjectDetailViewProps)
 
   const loadWorkOrders = async () => {
     try {
-      const { data, error } = await supabase
-        .from('tickets')
+      const { data, error } = await (supabase
+        .from('tickets') as any)
         .select(`
           *,
           profiles:assigned_to(full_name),
@@ -344,7 +340,7 @@ export function ProjectDetailView({ projectId, onBack }: ProjectDetailViewProps)
       return 'ISS-001';
     }
 
-    const lastNumber = parseInt(data[0].issue_number.split('-')[1]) || 0;
+    const lastNumber = parseInt((data[0] as any)?.issue_number?.split('-')[1]) || 0;
     return `ISS-${String(lastNumber + 1).padStart(3, '0')}`;
   };
 
@@ -1172,7 +1168,7 @@ export function ProjectDetailView({ projectId, onBack }: ProjectDetailViewProps)
                             try {
                               const { error } = await supabase
                                 .from('project_tasks')
-                                .update({ status: status })
+                                .update({ status: status as any })
                                 .eq('id', draggedTaskId);
 
                               if (error) throw error;
@@ -1251,7 +1247,7 @@ export function ProjectDetailView({ projectId, onBack }: ProjectDetailViewProps)
                                     try {
                                       const { error } = await supabase
                                         .from('project_tasks')
-                                        .update({ status: newStatus })
+                                        .update({ status: newStatus as any })
                                         .eq('id', task.id);
 
                                       if (error) throw error;
@@ -1285,7 +1281,7 @@ export function ProjectDetailView({ projectId, onBack }: ProjectDetailViewProps)
                       try {
                         const { error } = await supabase
                           .from('project_tasks')
-                          .update({ status: status })
+                          .update({ status: status as any })
                           .eq('id', draggedTaskId);
 
                         if (error) throw error;

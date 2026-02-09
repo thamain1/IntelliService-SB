@@ -395,7 +395,7 @@ function EditPlanModal({ plan, onClose }: { plan: ContractPlan; onClose: () => v
                 Priority Level
               </label>
               <select
-                value={formData.priority_level}
+                value={formData.priority_level || ''}
                 onChange={(e) => setFormData({ ...formData, priority_level: e.target.value as any })}
                 className="input"
               >
@@ -422,7 +422,7 @@ function EditPlanModal({ plan, onClose }: { plan: ContractPlan; onClose: () => v
               <label className="flex items-center">
                 <input
                   type="checkbox"
-                  checked={formData.waive_trip_charge}
+                  checked={formData.waive_trip_charge ?? false}
                   onChange={(e) => setFormData({ ...formData, waive_trip_charge: e.target.checked })}
                   className="w-4 h-4 text-blue-600 rounded"
                 />
@@ -434,7 +434,7 @@ function EditPlanModal({ plan, onClose }: { plan: ContractPlan; onClose: () => v
               <label className="flex items-center">
                 <input
                   type="checkbox"
-                  checked={formData.includes_emergency_service}
+                  checked={formData.includes_emergency_service ?? false}
                   onChange={(e) => setFormData({ ...formData, includes_emergency_service: e.target.checked })}
                   className="w-4 h-4 text-blue-600 rounded"
                 />
@@ -446,7 +446,7 @@ function EditPlanModal({ plan, onClose }: { plan: ContractPlan; onClose: () => v
               <label className="flex items-center">
                 <input
                   type="checkbox"
-                  checked={formData.includes_after_hours_rate_reduction}
+                  checked={formData.includes_after_hours_rate_reduction ?? false}
                   onChange={(e) => setFormData({ ...formData, includes_after_hours_rate_reduction: e.target.checked })}
                   className="w-4 h-4 text-blue-600 rounded"
                 />
@@ -628,7 +628,7 @@ function NewPlanModal({ onClose }: { onClose: () => void }) {
                 Priority Level
               </label>
               <select
-                value={formData.priority_level}
+                value={formData.priority_level || ''}
                 onChange={(e) => setFormData({ ...formData, priority_level: e.target.value as any })}
                 className="input"
               >
@@ -655,7 +655,7 @@ function NewPlanModal({ onClose }: { onClose: () => void }) {
               <label className="flex items-center">
                 <input
                   type="checkbox"
-                  checked={formData.waive_trip_charge}
+                  checked={formData.waive_trip_charge ?? false}
                   onChange={(e) => setFormData({ ...formData, waive_trip_charge: e.target.checked })}
                   className="w-4 h-4 text-blue-600 rounded"
                 />
@@ -667,7 +667,7 @@ function NewPlanModal({ onClose }: { onClose: () => void }) {
               <label className="flex items-center">
                 <input
                   type="checkbox"
-                  checked={formData.includes_emergency_service}
+                  checked={formData.includes_emergency_service ?? false}
                   onChange={(e) => setFormData({ ...formData, includes_emergency_service: e.target.checked })}
                   className="w-4 h-4 text-blue-600 rounded"
                 />
@@ -679,7 +679,7 @@ function NewPlanModal({ onClose }: { onClose: () => void }) {
               <label className="flex items-center">
                 <input
                   type="checkbox"
-                  checked={formData.includes_after_hours_rate_reduction}
+                  checked={formData.includes_after_hours_rate_reduction ?? false}
                   onChange={(e) => setFormData({ ...formData, includes_after_hours_rate_reduction: e.target.checked })}
                   className="w-4 h-4 text-blue-600 rounded"
                 />

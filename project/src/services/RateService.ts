@@ -39,6 +39,20 @@ export interface LaborRateSnapshot {
   overriddenAt?: string;
 }
 
+// RPC response type for fn_resolve_labor_rate
+interface RateRpcResponse {
+  error?: boolean;
+  message?: string;
+  rate_type?: RateType;
+  bill_rate?: number | string;
+  rate_source?: RateSource;
+  contract_id_applied?: string | null;
+  is_covered?: boolean;
+  override_allowed?: boolean;
+  override_reason?: string;
+  overridden_by?: string;
+}
+
 export class RateService {
   static async resolveLaborRate(
     context: ResolveRateContext
@@ -65,20 +79,23 @@ export class RateService {
         throw new Error(`Failed to resolve labor rate: ${error.message}`);
       }
 
-      if (data.error) {
-        throw new Error(data.message || 'Rate resolution failed');
+      // Cast RPC result to expected type
+      const result = data as RateRpcResponse | null;
+
+      if (!result || result.error) {
+        throw new Error(result?.message || 'Rate resolution failed');
       }
 
       return {
-        rateType: data.rate_type,
-        billRate: parseFloat(data.bill_rate || 0),
-        rateSource: data.rate_source,
-        contractIdApplied: data.contract_id_applied,
-        isCovered: data.is_covered || false,
-        overrideAllowed: data.override_allowed || false,
-        message: data.message || '',
-        overrideReason: data.override_reason,
-        overriddenBy: data.overridden_by,
+        rateType: result.rate_type || 'standard',
+        billRate: parseFloat(String(result.bill_rate || 0)),
+        rateSource: result.rate_source || 'settings',
+        contractIdApplied: result.contract_id_applied || null,
+        isCovered: result.is_covered || false,
+        overrideAllowed: result.override_allowed || false,
+        message: result.message || '',
+        overrideReason: result.override_reason,
+        overriddenBy: result.overridden_by,
       };
     } catch (error) {
       console.error('Error in resolveLaborRate:', error);

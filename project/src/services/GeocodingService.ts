@@ -236,7 +236,7 @@ export class GeocodingService {
     switch (status) {
       case 'ZERO_RESULTS':
         return 'No results found for this address';
-      case 'OVER_DAILY_LIMIT':
+      case 'OVER_DAILY_LIMIT' as google.maps.GeocoderStatus:
         return 'Daily geocoding limit exceeded';
       case 'OVER_QUERY_LIMIT':
         return 'Too many requests. Please try again later';

@@ -3,15 +3,11 @@ import {
   Target,
   Phone,
   Mail,
-  Wrench,
-  Calendar,
-  User,
   AlertTriangle,
-  ChevronRight,
   Search,
+  Plus,
   Filter,
   Clock,
-  Plus,
 } from 'lucide-react';
 import { CRMService } from '../../services/CRMService';
 import { NewEstimateModal } from '../Estimates/NewEstimateModal';

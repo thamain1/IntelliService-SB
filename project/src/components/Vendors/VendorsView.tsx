@@ -8,7 +8,6 @@ import {
   CheckCircle,
   Clock,
   XCircle,
-  Filter,
 } from 'lucide-react';
 import { supabase } from '../../lib/supabase';
 import { useAuth } from '../../contexts/AuthContext';
@@ -82,7 +81,7 @@ export function VendorsView({ initialTab = 'list', onViewChange }: VendorsViewPr
         .order('display_name');
 
       if (error) throw error;
-      setVendors(data || []);
+      setVendors((data as any) || []);
     } catch (error) {
       console.error('Error loading vendors:', error);
     } finally {

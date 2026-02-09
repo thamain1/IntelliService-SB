@@ -7,12 +7,10 @@ import {
   Shield,
   Pause,
   Package,
-  ChevronDown,
-  ChevronUp,
   Check,
 } from 'lucide-react';
 import { useNotifications } from '../../hooks/useNotifications';
-import { NotificationService, Notification } from '../../services/NotificationService';
+import { Notification } from '../../services/NotificationService';
 import { useAuth } from '../../contexts/AuthContext';
 
 export function NotificationToast() {

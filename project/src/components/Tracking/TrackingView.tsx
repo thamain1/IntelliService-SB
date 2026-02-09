@@ -21,7 +21,7 @@ interface TechnicianWithLocation extends Profile {
 export function TrackingView() {
   const [technicians, setTechnicians] = useState<TechnicianWithLocation[]>([]);
   const [loading, setLoading] = useState(true);
-  const [selectedTechId, setSelectedTechId] = useState<string | null>(null);
+  const [_selectedTechId, setSelectedTechId] = useState<string | null>(null);
   const [showDetailsModal, setShowDetailsModal] = useState(false);
   const [selectedTech, setSelectedTech] = useState<TechnicianWithLocation | null>(null);
 
@@ -76,8 +76,8 @@ export function TrackingView() {
   };
 
   const getLastUpdateTime = (location?: TechnicianLocation) => {
-    if (!location) return 'No location data';
-    const lastUpdate = new Date(location.timestamp);
+    if (!location || !location.timestamp) return 'No location data';
+    const lastUpdate = new Date(location.timestamp as any);
     const now = new Date();
     const diffMinutes = Math.floor((now.getTime() - lastUpdate.getTime()) / 60000);
 
@@ -88,8 +88,8 @@ export function TrackingView() {
   };
 
   const getStatusColor = (location?: TechnicianLocation) => {
-    if (!location) return 'bg-gray-400';
-    const lastUpdate = new Date(location.timestamp);
+    if (!location || !location.timestamp) return 'bg-gray-400';
+    const lastUpdate = new Date(location.timestamp as any);
     const now = new Date();
     const diffMinutes = Math.floor((now.getTime() - lastUpdate.getTime()) / 60000);
 
@@ -103,7 +103,7 @@ export function TrackingView() {
     setShowDetailsModal(true);
   };
 
-  const getStatusBadgeColor = (status: string) => {
+  const getStatusBadgeColor = (status: string | null) => {
     switch (status) {
       case 'scheduled':
         return 'bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200';
@@ -157,7 +157,7 @@ export function TrackingView() {
                   technicians.filter((t) => {
                     if (!t.latest_location) return false;
                     const diffMinutes = Math.floor(
-                      (new Date().getTime() - new Date(t.latest_location.timestamp).getTime()) /
+                      (new Date().getTime() - new Date(t.latest_location.timestamp as any).getTime()) /
                         60000
                     );
                     return diffMinutes < 5;
@@ -456,7 +456,7 @@ export function TrackingView() {
                               ticket.status
                             )}`}
                           >
-                            {ticket.status.replace('_', ' ')}
+                            {(ticket.status ?? 'unknown').replace('_', ' ')}
                           </span>
                         </div>
                         <div className="flex items-center justify-between text-sm text-gray-600 dark:text-gray-400">

@@ -1,7 +1,4 @@
 import { supabase } from '../lib/supabase';
-import type { Database } from '../lib/database.types';
-
-type Invoice = Database['public']['Tables']['invoices']['Row'];
 
 export interface CustomerFinancialSummary {
   total_revenue_lifetime: number;

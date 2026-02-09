@@ -1,5 +1,5 @@
-import { useEffect, useState, useCallback } from 'react';
-import { Camera, Package, MessageSquare, CheckCircle, Clock, AlertTriangle, MapPin, Phone, User, Plus, X, Upload, History, Eye, AlertOctagon, PackageX, Navigation } from 'lucide-react';
+import { useEffect, useState } from 'react';
+import { Camera, Package, MessageSquare, CheckCircle, Clock, AlertTriangle, MapPin, Phone, User, Plus, X, History, Eye, AlertOctagon, PackageX, Navigation } from 'lucide-react';
 import { supabase } from '../../lib/supabase';
 import { useAuth } from '../../contexts/AuthContext';
 import { holdTicketForParts, reportTicketIssue } from '../../services/TicketHoldService';
@@ -25,64 +25,67 @@ type Ticket = {
   id: string;
   ticket_number: string;
   title: string;
-  description: string;
-  status: string;
-  priority: string;
-  scheduled_date: string;
-  hours_onsite: number;
-  hold_active?: boolean;
+  description: string | null;
+  status: string | null;
+  priority: string | null;
+  scheduled_date: string | null;
+  hours_onsite: number | null;
+  hold_active?: boolean | null;
   hold_type?: string | null;
   hold_parts_active?: boolean;
   hold_issue_active?: boolean;
-  revisit_required?: boolean;
+  revisit_required?: boolean | null;
+  assigned_to?: string | null;
+  completed_date?: string | null;
   customers: {
     name: string;
-    phone: string;
-    email: string;
-    address: string;
-  };
+    phone: string | null;
+    email: string | null;
+    address: string | null;
+  } | null;
   equipment: {
-    equipment_type: string;
-    model_number: string;
+    equipment_type: string | null;
+    model_number: string | null;
   } | null;
 };
 
 type TicketUpdate = {
   id: string;
-  update_type: string;
-  notes: string;
-  progress_percent: number;
-  created_at: string;
+  update_type?: string | null;
+  notes: string | null;
+  progress_percent: number | null;
+  created_at: string | null;
+  status?: string | null;
   profiles: {
-    full_name: string;
-  };
+    full_name: string | null;
+  } | null;
 };
 
 type TicketPhoto = {
   id: string;
   photo_url: string;
-  photo_type: string;
-  caption: string;
-  created_at: string;
+  photo_type: string | null;
+  caption: string | null;
+  created_at: string | null;
 };
 
 type PartUsed = {
   id: string;
   quantity: number;
-  notes: string;
-  created_at: string;
+  notes: string | null;
+  created_at: string | null;
   parts: {
     part_number: string;
     name: string;
-    unit_price: number;
+    unit_price: number | null;
   };
 };
 
 type Part = {
-  id: string;
-  part_number: string;
+  id: string | null;
+  part_number: string | null;
   name: string;
-  unit_price: number;
+  unit_price: number | null;
 };
 
 type StandardCode = {
@@ -90,9 +93,9 @@ type StandardCode = {
   label: string;
   description: string | null;
   category: string | null;
-  is_critical_safety: boolean;
-  triggers_sales_lead: boolean;
-  triggers_urgent_review: boolean;
+  is_critical_safety: boolean | null;
+  triggers_sales_lead: boolean | null;
+  triggers_urgent_review: boolean | null;
 };
 
 export function TechnicianTicketView() {
@@ -131,8 +134,13 @@ export function TechnicianTicketView() {
   });
   const [needPartsLoading, setNeedPartsLoading] = useState(false);
 
-  const [updateFormData, setUpdateFormData] = useState({
-    update_type: 'progress_note' as const,
+  const [updateFormData, setUpdateFormData] = useState<{
+    update_type: 'progress_note' | 'completed' | 'status_change';
+    notes: string;
+    progress_percent: number;
+    status: string;
+  }>({
+    update_type: 'progress_note',
     notes: '',
     progress_percent: 0,
     status: '',
@@ -257,8 +265,8 @@ export function TechnicianTicketView() {
   const loadCompletedTickets = async () => {
     if (!profile?.id) return;
     try {
-      const { data, error } = await supabase
-        .from('tickets')
+      const { data, error } = await (supabase
+        .from('tickets') as any)
         .select('*, customers!tickets_customer_id_fkey(name, phone, email, address), equipment(equipment_type, model_number)')
         .eq('assigned_to', profile.id)
         .in('status', ['completed', 'closed_billed'])
@@ -273,10 +281,10 @@ export function TechnicianTicketView() {
 
   const loadMyTickets = async () => {
     try {
-      const { data, error } = await supabase
-        .from('tickets')
+      const { data, error } = await (supabase
+        .from('tickets') as any)
         .select('*, customers!tickets_customer_id_fkey(name, phone, email, address), equipment(equipment_type, model_number)')
-        .eq('assigned_to', profile?.id)
+        .eq('assigned_to', profile?.id ?? '')
         .in('status', ['open', 'scheduled', 'in_progress'])
         .order('scheduled_date', { ascending: true });
 
@@ -431,7 +439,7 @@ export function TechnicianTicketView() {
     if (!selectedTicket || !profile?.id) return;
 
     try {
-      const { data, error } = await supabase.rpc('fn_end_ticket_work', {
+      const { data: _endWorkData, error } = await supabase.rpc('fn_end_ticket_work', {
         p_tech_id: profile.id,
         p_ticket_id: selectedTicket.id,
       });
@@ -577,7 +585,7 @@ export function TechnicianTicketView() {
       // If completing, stop the timer first
       if (isCompletingTicket && activeTimer?.has_active_timer && activeTimer.ticket_id === selectedTicket.id) {
         const { error: timerError } = await supabase.rpc('fn_end_ticket_work', {
-          p_tech_id: profile?.id,
+          p_tech_id: profile?.id || '',
           p_ticket_id: selectedTicket.id,
         });
         if (timerError) {
@@ -750,13 +758,13 @@ export function TechnicianTicketView() {
 
       console.log('Inserting record with photo_type:', photoType);
 
-      const { error } = await supabase.from('ticket_photos').insert([{
+      const { error } = await supabase.from('ticket_photos' as any).insert([{
         ticket_id: selectedTicket.id,
         uploaded_by: profile?.id,
         photo_url: urlData.publicUrl,
         photo_type: photoType,
         caption: photoFormData.caption || null,
-      }]);
+      }] as any);
 
       if (error) {
         console.error('Database insert error:', error);
@@ -783,7 +791,7 @@ export function TechnicianTicketView() {
     }
   };
 
-  const getStatusColor = (status: string) => {
+  const getStatusColor = (status: string | null) => {
     switch (status) {
       case 'open': return 'badge-blue';
       case 'scheduled': return 'badge-blue';
@@ -794,7 +802,7 @@ export function TechnicianTicketView() {
     }
   };
 
-  const getPriorityColor = (priority: string) => {
+  const getPriorityColor = (priority: string | null) => {
     switch (priority) {
       case 'urgent': return 'text-red-600';
       case 'high': return 'text-orange-600';
@@ -868,7 +876,7 @@ export function TechnicianTicketView() {
             </div>
           </div>
           <span className={`badge ${getStatusColor(selectedTicket.status)}`}>
-            {selectedTicket.status.replace('_', ' ')}
+            {(selectedTicket.status ?? 'unknown').replace('_', ' ')}
           </span>
         </div>
 
@@ -927,13 +935,13 @@ export function TechnicianTicketView() {
                   <div>
                     <p className="text-sm text-gray-600 dark:text-gray-400">Scheduled</p>
                     <p className="text-gray-900 dark:text-white">
-                      {new Date(selectedTicket.scheduled_date).toLocaleString()}
+                      {selectedTicket.scheduled_date ? new Date(selectedTicket.scheduled_date).toLocaleString() : 'Not scheduled'}
                     </p>
                   </div>
                   <div>
                     <p className="text-sm text-gray-600 dark:text-gray-400">Priority</p>
                     <p className={`font-medium ${getPriorityColor(selectedTicket.priority)}`}>
-                      {selectedTicket.priority.toUpperCase()}
+                      {(selectedTicket.priority ?? 'normal').toUpperCase()}
                     </p>
                   </div>
                 </div>
@@ -968,18 +976,18 @@ export function TechnicianTicketView() {
                   updates.map((update) => (
                     <div key={update.id} className="border border-gray-200 dark:border-gray-700 rounded-lg p-4">
                       <div className="flex items-start space-x-3">
-                        {getUpdateTypeIcon(update.update_type)}
+                        {getUpdateTypeIcon(update.update_type ?? '')}
                         <div className="flex-1">
                           <div className="flex items-center justify-between mb-1">
                             <span className="font-medium text-gray-900 dark:text-white">
-                              {update.update_type.replace('_', ' ')}
+                              {(update.update_type ?? '').replace('_', ' ')}
                             </span>
                             <span className="text-sm text-gray-500 dark:text-gray-400">
-                              {new Date(update.created_at).toLocaleString()}
+                              {update.created_at ? new Date(update.created_at).toLocaleString() : ''}
                             </span>
                           </div>
                           <p className="text-gray-700 dark:text-gray-300">{update.notes}</p>
-                          {update.progress_percent > 0 && (
+                          {(update.progress_percent ?? 0) > 0 && (
                             <div className="mt-2">
                               <div className="flex items-center justify-between text-sm mb-1">
                                 <span className="text-gray-600 dark:text-gray-400">Progress</span>
@@ -1082,7 +1090,7 @@ export function TechnicianTicketView() {
                         )}
                       </div>
                       <p className="font-medium text-gray-900 dark:text-white">
-                        ${(part.parts.unit_price * part.quantity).toFixed(2)}
+                        ${((part.parts.unit_price ?? 0) * part.quantity).toFixed(2)}
                       </p>
                     </div>
                   ))
@@ -1093,7 +1101,7 @@ export function TechnicianTicketView() {
                   <div className="flex items-center justify-between font-bold">
                     <span className="text-gray-900 dark:text-white">Total Parts Cost</span>
                     <span className="text-gray-900 dark:text-white">
-                      ${partsUsed.reduce((sum, p) => sum + (p.parts.unit_price * p.quantity), 0).toFixed(2)}
+                      ${partsUsed.reduce((sum, p) => sum + ((p.parts.unit_price ?? 0) * p.quantity), 0).toFixed(2)}
                     </span>
                   </div>
                 </div>
@@ -1110,7 +1118,7 @@ export function TechnicianTicketView() {
                   <div>
                     <p className="text-sm text-gray-600 dark:text-gray-400">Name</p>
                     <p className="font-medium text-gray-900 dark:text-white">
-                      {selectedTicket.customers.name}
+                      {selectedTicket.customers?.name ?? 'N/A'}
                     </p>
                   </div>
                 </div>
@@ -1119,10 +1127,10 @@ export function TechnicianTicketView() {
                   <div>
                     <p className="text-sm text-gray-600 dark:text-gray-400">Phone</p>
                     <a
-                      href={`tel:${selectedTicket.customers.phone}`}
+                      href={`tel:${selectedTicket.customers?.phone}`}
                       className="font-medium text-blue-600 hover:underline"
                     >
-                      {selectedTicket.customers.phone}
+                      {selectedTicket.customers?.phone ?? 'N/A'}
                     </a>
                   </div>
                 </div>
@@ -1131,7 +1139,7 @@ export function TechnicianTicketView() {
                   <div>
                     <p className="text-sm text-gray-600 dark:text-gray-400">Address</p>
                     <p className="font-medium text-gray-900 dark:text-white">
-                      {selectedTicket.customers.address}
+                      {selectedTicket.customers?.address ?? 'N/A'}
                     </p>
                   </div>
                 </div>
@@ -1154,7 +1162,7 @@ export function TechnicianTicketView() {
                   </div>
                 )}
               </div>
-              {selectedTicket.customers.address && (
+              {selectedTicket.customers?.address && (
                 <a
                   href={`https://www.google.com/maps/dir/?api=1&destination=${encodeURIComponent(selectedTicket.customers.address)}`}
                   target="_blank"
@@ -1173,14 +1181,14 @@ export function TechnicianTicketView() {
                 <div className="flex items-center justify-between p-3 bg-gray-50 dark:bg-gray-700 rounded-lg">
                   <span className="text-sm text-gray-600 dark:text-gray-400">Status</span>
                   <span className={`badge ${getStatusColor(selectedTicket.status)}`}>
-                    {selectedTicket.status.replace('_', ' ')}
+                    {(selectedTicket.status ?? 'unknown').replace('_', ' ')}
                   </span>
                 </div>
-                {selectedTicket.hours_onsite > 0 && (
+                {(selectedTicket.hours_onsite ?? 0) > 0 && (
                   <div className="flex items-center justify-between p-3 bg-blue-50 dark:bg-blue-900/20 rounded-lg">
                     <span className="text-sm text-gray-600 dark:text-gray-400">Billable Hours</span>
                     <span className="font-bold text-blue-600">
-                      {selectedTicket.hours_onsite.toFixed(2)} hrs
+                      {(selectedTicket.hours_onsite ?? 0).toFixed(2)} hrs
                     </span>
                   </div>
                 )}
@@ -1212,9 +1220,9 @@ export function TechnicianTicketView() {
                         )}
                         <button
                           onClick={handleStartWork}
-                          disabled={hasAnotherTimerActive || selectedTicket.hold_active}
+                          disabled={hasAnotherTimerActive || (selectedTicket.hold_active ?? false)}
                           className={`w-full btn flex items-center justify-center space-x-2 ${
-                            (hasAnotherTimerActive || selectedTicket.hold_active)
+                            (hasAnotherTimerActive || (selectedTicket.hold_active ?? false))
                               ? 'btn-outline opacity-50 cursor-not-allowed'
                               : !isShiftClockedIn
                                 ? 'btn-outline border-yellow-500 text-yellow-700 hover:bg-yellow-50 dark:border-yellow-600 dark:text-yellow-400 dark:hover:bg-yellow-900/20'
@@ -1282,9 +1290,9 @@ export function TechnicianTicketView() {
                         setUpdateFormData({ ...updateFormData, update_type: 'completed', status: 'completed', progress_percent: 100 });
                         setShowUpdateModal(true);
                       }}
-                      disabled={selectedTicket.hold_active}
+                      disabled={selectedTicket.hold_active ?? false}
                       className={`w-full btn flex items-center justify-center space-x-2 ${
-                        selectedTicket.hold_active
+                        (selectedTicket.hold_active ?? false)
                           ? 'btn-outline opacity-50 cursor-not-allowed'
                           : 'btn-primary'
                       }`}
@@ -1499,13 +1507,13 @@ export function TechnicianTicketView() {
                     </label>
                     <select
                       required
-                      value={partsFormData.part_id}
+                      value={partsFormData.part_id ?? ''}
                       onChange={(e) => setPartsFormData({ ...partsFormData, part_id: e.target.value })}
                       className="input"
                     >
                       <option value="">Select Part</option>
                       {availableParts.map((part) => (
-                        <option key={part.id} value={part.id}>
+                        <option key={part.id} value={part.id ?? ''}>
                           {part.part_number} - {part.name} (${part.unit_price})
                         </option>
                       ))}
@@ -1673,13 +1681,13 @@ export function TechnicianTicketView() {
                     Part Needed (optional)
                   </label>
                   <select
-                    value={needPartsFormData.part_id}
+                    value={needPartsFormData.part_id ?? ''}
                     onChange={(e) => setNeedPartsFormData({ ...needPartsFormData, part_id: e.target.value })}
                     className="input"
                   >
                     <option value="">-- Select specific part or describe below --</option>
                     {allParts.map((part) => (
-                      <option key={part.id} value={part.id}>
+                      <option key={part.id} value={part.id ?? ''}>
                         {part.part_number} - {part.name}
                       </option>
                     ))}
@@ -1875,8 +1883,8 @@ export function TechnicianTicketView() {
                   // Ticket not in local list, fetch it directly
                   console.log('Fetching ticket directly, id:', activeTimer.ticket_id);
                   try {
-                    const { data, error } = await supabase
-                      .from('tickets')
+                    const { data, error } = await (supabase
+                      .from('tickets') as any)
                       .select('*, customers!tickets_customer_id_fkey(name, phone, email, address), equipment(equipment_type, model_number)')
                       .eq('id', activeTimer.ticket_id)
                       .single();
@@ -1933,30 +1941,30 @@ export function TechnicianTicketView() {
                     </h3>
                   </div>
                   <span className={`badge ${getStatusColor(ticket.status)}`}>
-                    {ticket.status.replace('_', ' ')}
+                    {(ticket.status ?? 'unknown').replace('_', ' ')}
                   </span>
                 </div>
 
                 <div className="space-y-2 mb-4">
                   <div className="flex items-center space-x-2 text-sm">
                     <User className="w-4 h-4 text-gray-400" />
-                    <span className="text-gray-900 dark:text-white">{ticket.customers.name}</span>
+                    <span className="text-gray-900 dark:text-white">{ticket.customers?.name ?? 'N/A'}</span>
                   </div>
                   <div className="flex items-center space-x-2 text-sm">
                     <MapPin className="w-4 h-4 text-gray-400" />
-                    <span className="text-gray-900 dark:text-white">{ticket.customers.address}</span>
+                    <span className="text-gray-900 dark:text-white">{ticket.customers?.address ?? 'N/A'}</span>
                   </div>
                   <div className="flex items-center space-x-2 text-sm">
                     <Clock className="w-4 h-4 text-gray-400" />
                     <span className="text-gray-900 dark:text-white">
-                      {new Date(ticket.scheduled_date).toLocaleString()}
+                      {new Date(ticket.scheduled_date ?? '').toLocaleString()}
                     </span>
                   </div>
                 </div>
 
                 <div className="pt-3 border-t border-gray-200 dark:border-gray-700">
                   <span className={`text-sm font-medium ${getPriorityColor(ticket.priority)}`}>
-                    {ticket.priority.toUpperCase()} PRIORITY
+                    {(ticket.priority ?? 'normal').toUpperCase()} PRIORITY
                   </span>
                 </div>
               </div>
@@ -1993,7 +2001,7 @@ export function TechnicianTicketView() {
                       </h3>
                     </div>
                     <span className={`badge ${getStatusColor(ticket.status)}`}>
-                      {ticket.status.replace('_', ' ')}
+                      {(ticket.status ?? 'unknown').replace('_', ' ')}
                     </span>
                   </div>
 

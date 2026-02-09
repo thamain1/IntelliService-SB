@@ -1,7 +1,6 @@
 import { useState, useEffect } from 'react';
-import { X, Shield, AlertCircle, Phone, Globe, FileText, DollarSign, Calendar } from 'lucide-react';
+import { X, Shield, AlertCircle, Phone, FileText, DollarSign, Calendar } from 'lucide-react';
 import { WarrantyService, type CreateClaimInput, type WarrantyClaimSummary } from '../../services/WarrantyService';
-import { supabase } from '../../lib/supabase';
 
 interface WarrantyClaimModalProps {
   onClose: () => void;

@@ -108,11 +108,11 @@ export function NewTicketModal({ isOpen, onClose, onSuccess, defaultType = 'SVC'
           .order('sort_order'),
       ]);
 
-      if (customersRes.data) setCustomers(customersRes.data);
-      if (equipmentRes.data) setEquipment(equipmentRes.data);
-      if (techniciansRes.data) setTechnicians(techniciansRes.data);
-      if (projectsRes.data) setProjects(projectsRes.data);
-      if (problemCodesRes.data) setProblemCodes(problemCodesRes.data);
+      if (customersRes.data) setCustomers((customersRes.data as any));
+      if (equipmentRes.data) setEquipment((equipmentRes.data as any));
+      if (techniciansRes.data) setTechnicians((techniciansRes.data as any));
+      if (projectsRes.data) setProjects((projectsRes.data as any));
+      if (problemCodesRes.data) setProblemCodes((problemCodesRes.data as any));
     } catch (error) {
       console.error('Error loading data:', error);
     }

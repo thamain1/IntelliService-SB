@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { X, FileText, Calendar, DollarSign, Edit2, Save, Package, TrendingUp, FileCheck, Plus, Trash2 } from 'lucide-react';
+import { X, FileText, Edit2, Save, Package, TrendingUp, FileCheck, Plus, Trash2 } from 'lucide-react';
 import { supabase } from '../../lib/supabase';
 import { VendorContractService } from '../../services/VendorContractService';
 import type { Database } from '../../lib/database.types';
@@ -247,7 +247,7 @@ export function VendorContractDetailModal({ contract: initialContract, onClose }
                 Status *
               </label>
               <select
-                value={formData.status}
+                value={formData.status ?? ''}
                 onChange={(e) => setFormData({ ...formData, status: e.target.value })}
                 className="input w-full"
               >
@@ -264,7 +264,7 @@ export function VendorContractDetailModal({ contract: initialContract, onClose }
                 Contract Type *
               </label>
               <select
-                value={formData.contract_type}
+                value={formData.contract_type ?? ''}
                 onChange={(e) => setFormData({ ...formData, contract_type: e.target.value })}
                 className="input w-full"
               >
@@ -414,14 +414,14 @@ export function VendorContractDetailModal({ contract: initialContract, onClose }
           <div>
             <p className="text-xs text-gray-500 dark:text-gray-400 uppercase tracking-wide">Type</p>
             <p className="text-sm font-medium text-gray-900 dark:text-white mt-1">
-              {contract.contract_type.toUpperCase()}
+              {(contract.contract_type ?? 'standard').toUpperCase()}
             </p>
           </div>
 
           <div>
             <p className="text-xs text-gray-500 dark:text-gray-400 uppercase tracking-wide">Status</p>
             <p className="text-sm font-medium text-gray-900 dark:text-white mt-1">
-              {contract.status.toUpperCase()}
+              {(contract.status ?? 'active').toUpperCase()}
             </p>
           </div>
 

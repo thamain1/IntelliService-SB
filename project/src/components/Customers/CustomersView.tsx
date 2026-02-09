@@ -674,6 +674,8 @@ export function CustomersView() {
                       state: '',
                       zip_code: '',
                       notes: '',
+                      site_contact_name: '',
+                      site_contact_phone: '',
                     });
                     loadCustomers();
                   } catch (error) {
@@ -828,6 +830,8 @@ export function CustomersView() {
                         state: '',
                         zip_code: '',
                         notes: '',
+                        site_contact_name: '',
+                        site_contact_phone: '',
                       });
                     }}
                     className="btn btn-outline flex-1"

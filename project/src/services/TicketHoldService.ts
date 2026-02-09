@@ -54,7 +54,7 @@ export async function holdTicketForParts(payload: HoldForPartsPayload): Promise<
       };
     }
 
-    return data as HoldResponse;
+    return data as unknown as HoldResponse;
   } catch (error) {
     console.error('Exception holding ticket for parts:', error);
     return {
@@ -87,7 +87,7 @@ export async function reportTicketIssue(payload: ReportIssuePayload): Promise<Ho
       };
     }
 
-    return data as HoldResponse;
+    return data as unknown as HoldResponse;
   } catch (error) {
     console.error('Exception reporting ticket issue:', error);
     return {
@@ -105,7 +105,7 @@ export async function resumeTicket(ticketId: string, resolutionNotes?: string): 
   try {
     const { data, error } = await supabase.rpc('fn_ticket_resume', {
       p_ticket_id: ticketId,
-      p_resolution_notes: resolutionNotes || null,
+      p_resolution_notes: resolutionNotes ?? undefined,
     });
 
     if (error) {
@@ -116,7 +116,7 @@ export async function resumeTicket(ticketId: string, resolutionNotes?: string): 
       };
     }
 
-    return data as HoldResponse;
+    return data as unknown as HoldResponse;
   } catch (error) {
     console.error('Exception resuming ticket:', error);
     return {

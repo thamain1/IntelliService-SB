@@ -239,7 +239,7 @@ export function ProjectMarginsReport() {
                     }}
                     itemStyle={{ color: '#F9FAFB' }}
                     labelStyle={{ color: '#F9FAFB' }}
-                    formatter={(value: number) => [`$${value.toLocaleString()}`]}
+                    formatter={((value: number) => [`$${value.toLocaleString()}`]) as any}
                   />
                   <Legend />
                   <Bar dataKey="revenue" name="Revenue" fill="#3B82F6" radius={[4, 4, 0, 0]} />
@@ -292,7 +292,7 @@ export function ProjectMarginsReport() {
                     }}
                     itemStyle={{ color: '#F9FAFB' }}
                     labelStyle={{ color: '#F9FAFB' }}
-                    formatter={(value: number) => [`${value}%`, 'Margin']}
+                    formatter={((value: number) => [`${value}%`, 'Margin']) as any}
                   />
                   <Bar dataKey="margin" name="Margin %" radius={[4, 4, 0, 0]}>
                     {metrics.projects.slice(0, 8).map((project, index) => (

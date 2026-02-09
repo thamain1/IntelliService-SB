@@ -71,15 +71,15 @@ export function NotificationsSettings() {
       if (!userData.user) return;
 
       const { data, error } = await supabase
-        .from('user_preferences')
-        .select('preferences')
+        .from('user_preferences' as any)
+        .select('preferences' as any)
         .eq('user_id', userData.user.id)
         .maybeSingle();
 
       if (error && error.code !== 'PGRST116') throw error;
 
-      if (data?.preferences?.notifications) {
-        setPreferences({ ...DEFAULT_PREFERENCES, ...data.preferences.notifications });
+      if (data && 'preferences' in data && (data as any).preferences?.notifications) {
+        setPreferences({ ...DEFAULT_PREFERENCES, ...(data as any).preferences.notifications });
       }
     } catch (error) {
       console.error('Error loading preferences:', error);
@@ -98,25 +98,25 @@ export function NotificationsSettings() {
 
       // Check if preferences exist
       const { data: existing } = await supabase
-        .from('user_preferences')
-        .select('id, preferences')
+        .from('user_preferences' as any)
+        .select('id, preferences' as any)
         .eq('user_id', userData.user.id)
         .maybeSingle();
 
       const newPreferences = {
-        ...(existing?.preferences || {}),
+        ...(existing && 'preferences' in existing ? (existing as any).preferences : {}),
         notifications: preferences,
       };
 
       if (existing) {
         await supabase
-          .from('user_preferences')
+          .from('user_preferences' as any)
           .update({ preferences: newPreferences })
           .eq('user_id', userData.user.id);
       } else {
         await supabase
-          .from('user_preferences')
-          .insert({ user_id: userData.user.id, preferences: newPreferences });
+          .from('user_preferences' as any)
+          .insert({ user_id: userData.user.id, preferences: newPreferences } as any);
       }
 
       setMessage({ type: 'success', text: 'Notification preferences saved!' });

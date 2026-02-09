@@ -1,5 +1,5 @@
 import { useState, useCallback } from 'react';
-import { Upload, FileText, AlertCircle, CheckCircle, X, Settings } from 'lucide-react';
+import { Upload, FileText, AlertCircle, X, Settings } from 'lucide-react';
 import {
   parseFile,
   parseCSV,
@@ -18,7 +18,6 @@ interface BankStatementImportProps {
 export function BankStatementImport({
   reconciliationId,
   onImportComplete,
-  onCancel,
 }: BankStatementImportProps) {
   const [file, setFile] = useState<File | null>(null);
   const [fileContent, setFileContent] = useState<string>('');
@@ -26,7 +25,7 @@ export function BankStatementImport({
   const [parsedLines, setParsedLines] = useState<ParsedBankLine[]>([]);
   const [parseErrors, setParseErrors] = useState<string[]>([]);
   const [step, setStep] = useState<'upload' | 'mapping' | 'preview' | 'importing'>('upload');
-  const [importing, setImporting] = useState(false);
+  const [_importing, _setImporting] = useState(false);
   const [importProgress, setImportProgress] = useState({ current: 0, total: 0 });
 
   // CSV column mapping state
@@ -151,7 +150,7 @@ export function BankStatementImport({
   const handleImport = async () => {
     if (parsedLines.length === 0) return;
 
-    setImporting(true);
+    _setImporting(true);
     setStep('importing');
     setImportProgress({ current: 0, total: parsedLines.length });
 
@@ -159,14 +158,12 @@ export function BankStatementImport({
       for (let i = 0; i < parsedLines.length; i++) {
         const line = parsedLines[i];
 
-        await ReconciliationService.addBankStatementLine(reconciliationId, {
+        await ReconciliationService.addBankStatementLines(reconciliationId, [{
           transaction_date: line.transactionDate,
           description: line.description,
           amount: line.amount,
-          check_number: line.checkNumber,
-          reference_number: line.referenceNumber,
-          transaction_type: line.transactionType || (line.amount < 0 ? 'debit' : 'credit'),
-        });
+          external_transaction_id: line.checkNumber || line.referenceNumber,
+        }]);
 
         setImportProgress({ current: i + 1, total: parsedLines.length });
       }
@@ -177,7 +174,7 @@ export function BankStatementImport({
       setParseErrors(['Failed to import: ' + error.message]);
       setStep('preview');
     } finally {
-      setImporting(false);
+      _setImporting(false);
     }
   };
 

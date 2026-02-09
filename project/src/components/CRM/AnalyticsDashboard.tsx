@@ -1,66 +1,61 @@
 import { useState, useEffect } from 'react';
 import {
-  BarChart3,
   PieChart,
-  TrendingUp,
-  TrendingDown,
-  AlertTriangle,
   Wrench,
   Users,
   RefreshCw,
-  ChevronRight,
   Activity,
 } from 'lucide-react';
 import { supabase } from '../../lib/supabase';
 
 interface ParetoItem {
-  code: string;
-  label: string;
-  category: string;
-  severity: number;
-  ticket_count: number;
-  total_revenue: number;
-  avg_ticket_value: number;
-  percentage_of_total: number;
-  cumulative_percentage: number;
+  code: string | null;
+  label: string | null;
+  category: string | null;
+  severity: number | null;
+  ticket_count: number | null;
+  total_revenue: number | null;
+  avg_ticket_value: number | null;
+  percentage_of_total: number | null;
+  cumulative_percentage: number | null;
 }
 
 interface ReworkItem {
-  original_ticket_id: string;
-  original_ticket: string;
-  original_problem: string;
-  original_resolution: string;
-  callback_ticket: string;
-  callback_problem: string;
-  technician_name: string;
-  customer_name: string;
-  equipment_model: string;
-  days_between: number;
+  original_ticket_id: string | null;
+  original_ticket: string | null;
+  original_problem: string | null;
+  original_resolution: string | null;
+  callback_ticket: string | null;
+  callback_problem: string | null;
+  technician_name: string | null;
+  customer_name: string | null;
+  equipment_model?: string | null;
+  days_between: number | null;
 }
 
 interface EquipmentReliability {
-  manufacturer: string;
-  model_number: string;
-  equipment_type: string;
-  unit_count: number;
-  total_service_calls: number;
-  avg_days_between_failures: number;
-  min_days_between: number;
-  max_days_between: number;
-  callbacks_within_30_days: number;
+  manufacturer: string | null;
+  model_number: string | null;
+  equipment_type: string | null;
+  unit_count: number | null;
+  total_service_calls: number | null;
+  avg_days_between_failures: number | null;
+  min_days_between: number | null;
+  max_days_between: number | null;
+  callbacks_within_30_days: number | null;
 }
 
 interface TechQuality {
-  technician_id: string;
-  technician_name: string;
-  total_tickets: number;
-  completed_tickets: number;
-  callback_count: number;
-  callback_rate: number;
-  temp_fixes: number;
-  temp_fix_rate: number;
-  total_billed: number;
-  avg_ticket_value: number;
+  technician_id: string | null;
+  technician_name: string | null;
+  total_tickets: number | null;
+  completed_tickets: number | null;
+  callback_count: number | null;
+  callback_rate: number | null;
+  temp_fixes: number | null;
+  temp_fix_rate: number | null;
+  total_billed: number | null;
+  avg_ticket_value: number | null;
 }
 
 interface AnalyticsDashboardProps {
@@ -137,7 +132,7 @@ export function AnalyticsDashboard({ initialView }: AnalyticsDashboardProps) {
   ];
 
   const getMaxTicketCount = () => {
-    return Math.max(...paretoData.map((p) => p.ticket_count), 1);
+    return Math.max(...paretoData.map((p) => p.ticket_count ?? 0), 1);
   };
 
   const renderParetoView = () => (
@@ -170,8 +165,8 @@ export function AnalyticsDashboard({ initialView }: AnalyticsDashboardProps) {
               </tr>
             </thead>
             <tbody className="divide-y divide-gray-200 dark:divide-gray-700">
-              {paretoData.map((item, index) => (
-                <tr key={item.code} className={item.cumulative_percentage <= 80 ? 'bg-yellow-50 dark:bg-yellow-900/10' : ''}>
+              {paretoData.map((item) => (
+                <tr key={item.code} className={(item.cumulative_percentage ?? 0) <= 80 ? 'bg-yellow-50 dark:bg-yellow-900/10' : ''}>
                   <td className="px-4 py-3">
                     <div>
                       <p className="font-medium text-gray-900 dark:text-white">{item.label || item.code}</p>
@@ -190,15 +185,15 @@ export function AnalyticsDashboard({ initialView }: AnalyticsDashboardProps) {
                     {item.percentage_of_total?.toFixed(1)}%
                   </td>
                   <td className="px-4 py-3 text-right">
-                    <span className={item.cumulative_percentage <= 80 ? 'font-medium text-yellow-600' : 'text-gray-500'}>
-                      {item.cumulative_percentage?.toFixed(1)}%
+                    <span className={(item.cumulative_percentage ?? 0) <= 80 ? 'font-medium text-yellow-600' : 'text-gray-500'}>
+                      {(item.cumulative_percentage ?? 0).toFixed(1)}%
                     </span>
                   </td>
                   <td className="px-4 py-3">
                     <div className="w-full bg-gray-200 dark:bg-gray-700 rounded-full h-2">
                       <div
                         className="bg-blue-600 h-2 rounded-full"
-                        style={{ width: `${(item.ticket_count / getMaxTicketCount()) * 100}%` }}
+                        style={{ width: `${((item.ticket_count ?? 0) / getMaxTicketCount()) * 100}%` }}
                       />
                     </div>
                   </td>
@@ -230,7 +225,7 @@ export function AnalyticsDashboard({ initialView }: AnalyticsDashboardProps) {
       ) : (
         <div className="space-y-3">
           {reworkData.map((item) => (
-            <div key={item.original_ticket_id + item.callback_ticket} className="card p-4 border-l-4 border-l-red-500">
+            <div key={(item.original_ticket_id ?? '') + (item.callback_ticket ?? '')} className="card p-4 border-l-4 border-l-red-500">
               <div className="flex items-start justify-between">
                 <div>
                   <div className="flex items-center gap-2">
@@ -292,7 +287,7 @@ export function AnalyticsDashboard({ initialView }: AnalyticsDashboardProps) {
               </tr>
             </thead>
             <tbody className="divide-y divide-gray-200 dark:divide-gray-700">
-              {equipmentData.map((item, index) => (
+              {equipmentData.map((item) => (
                 <tr key={`${item.manufacturer}-${item.model_number}`}>
                   <td className="px-4 py-3">
                     <div>
@@ -304,15 +299,15 @@ export function AnalyticsDashboard({ initialView }: AnalyticsDashboardProps) {
                   <td className="px-4 py-3 text-right text-gray-500">{item.total_service_calls}</td>
                   <td className="px-4 py-3 text-right">
                     <span className={`font-medium ${
-                      item.avg_days_between_failures < 90 ? 'text-red-600' :
-                      item.avg_days_between_failures < 180 ? 'text-yellow-600' :
+                      (item.avg_days_between_failures ?? 0) < 90 ? 'text-red-600' :
+                      (item.avg_days_between_failures ?? 0) < 180 ? 'text-yellow-600' :
                       'text-green-600'
                     }`}>
                       {item.avg_days_between_failures} days
                     </span>
                   </td>
                   <td className="px-4 py-3 text-right">
-                    {item.callbacks_within_30_days > 0 ? (
+                    {(item.callbacks_within_30_days ?? 0) > 0 ? (
                       <span className="text-red-600 font-medium">{item.callbacks_within_30_days}</span>
                     ) : (
                       <span className="text-gray-400">0</span>
@@ -364,7 +359,7 @@ export function AnalyticsDashboard({ initialView }: AnalyticsDashboardProps) {
                   </td>
                   <td className="px-4 py-3 text-right text-gray-500">{tech.completed_tickets}</td>
                   <td className="px-4 py-3 text-right">
-                    {tech.callback_count > 0 ? (
+                    {(tech.callback_count ?? 0) > 0 ? (
                       <span className="text-red-600">{tech.callback_count}</span>
                     ) : (
                       <span className="text-gray-400">0</span>
@@ -372,16 +367,16 @@ export function AnalyticsDashboard({ initialView }: AnalyticsDashboardProps) {
                   </td>
                   <td className="px-4 py-3 text-right">
                     <span className={`font-medium ${
-                      tech.callback_rate > 10 ? 'text-red-600' :
-                      tech.callback_rate > 5 ? 'text-yellow-600' :
+                      (tech.callback_rate ?? 0) > 10 ? 'text-red-600' :
+                      (tech.callback_rate ?? 0) > 5 ? 'text-yellow-600' :
                       'text-green-600'
                     }`}>
-                      {tech.callback_rate?.toFixed(1)}%
+                      {(tech.callback_rate ?? 0).toFixed(1)}%
                     </span>
                   </td>
                   <td className="px-4 py-3 text-right">
-                    {tech.temp_fixes > 0 ? (
-                      <span className="text-yellow-600">{tech.temp_fixes} ({tech.temp_fix_rate?.toFixed(1)}%)</span>
+                    {(tech.temp_fixes ?? 0) > 0 ? (
+                      <span className="text-yellow-600">{tech.temp_fixes} ({(tech.temp_fix_rate ?? 0).toFixed(1)}%)</span>
                     ) : (
                       <span className="text-gray-400">0</span>
                     )}

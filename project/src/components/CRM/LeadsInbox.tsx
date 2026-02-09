@@ -8,16 +8,13 @@ import {
   DollarSign,
   MessageSquare,
   FileText,
-  ChevronRight,
   Search,
-  Filter,
   Plus,
-  Clock,
   CheckCircle,
   X,
   AlertCircle,
 } from 'lucide-react';
-import { CRMService, Lead, CreateInteractionInput } from '../../services/CRMService';
+import { CRMService, Lead } from '../../services/CRMService';
 import { NewInteractionModal } from './NewInteractionModal';
 
 interface LeadsInboxProps {
@@ -108,7 +105,7 @@ export function LeadsInbox({ onRefresh }: LeadsInboxProps) {
 
   const filteredLeads = leads.filter(
     (lead) =>
-      lead.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      (lead.name ?? '').toLowerCase().includes(searchTerm.toLowerCase()) ||
       lead.email?.toLowerCase().includes(searchTerm.toLowerCase()) ||
       lead.phone?.includes(searchTerm)
   );
@@ -195,7 +192,7 @@ export function LeadsInbox({ onRefresh }: LeadsInboxProps) {
                     )}
                     <div className="flex items-center gap-2 text-gray-500">
                       <Calendar className="w-4 h-4" />
-                      <span>{new Date(lead.created_at).toLocaleDateString()}</span>
+                      <span>{new Date(lead.created_at ?? new Date()).toLocaleDateString()}</span>
                     </div>
                   </div>
 
@@ -208,10 +205,10 @@ export function LeadsInbox({ onRefresh }: LeadsInboxProps) {
                       <FileText className="w-4 h-4" />
                       {lead.estimate_count} estimates
                     </span>
-                    {lead.pending_estimate_value > 0 && (
+                    {(lead.pending_estimate_value ?? 0) > 0 && (
                       <span className="flex items-center gap-1 text-green-600 font-medium">
                         <DollarSign className="w-4 h-4" />
-                        ${lead.pending_estimate_value.toLocaleString()} pending
+                        ${(lead.pending_estimate_value ?? 0).toLocaleString()} pending
                       </span>
                     )}
                   </div>
@@ -232,7 +229,7 @@ export function LeadsInbox({ onRefresh }: LeadsInboxProps) {
                   <button
                     onClick={(e) => {
                       e.stopPropagation();
-                      handleConvertLead(lead.id);
+                      if (lead.id) handleConvertLead(lead.id);
                     }}
                     disabled={convertingLead === lead.id}
                     className="btn btn-primary btn-sm flex items-center gap-1"
@@ -389,8 +386,8 @@ export function LeadsInbox({ onRefresh }: LeadsInboxProps) {
       {/* Interaction Modal */}
       {showInteractionModal && selectedLead && (
         <NewInteractionModal
-          customerId={selectedLead.id}
-          customerName={selectedLead.name}
+          customerId={selectedLead.id ?? ''}
+          customerName={selectedLead.name ?? ''}
           onClose={() => {
             setShowInteractionModal(false);
             setSelectedLead(null);

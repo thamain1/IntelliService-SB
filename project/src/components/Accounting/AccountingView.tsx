@@ -4,10 +4,10 @@ import { ExportService, ExportFormat } from '../../services/ExportService';
 import { supabase } from '../../lib/supabase';
 import { LaborRatesSettings } from './LaborRatesSettings';
 import { ReconciliationSession } from './ReconciliationSession';
-import { ReconciliationService, BankReconciliation as ServiceReconciliation } from '../../services/ReconciliationService';
+import { ReconciliationService } from '../../services/ReconciliationService';
 import { CashFlowReportView } from './CashFlowReportView';
 import { JobPLReportView } from './JobPLReportView';
-import { BillsView, NewBillModal, BillDetailModal, RecordPaymentModal, APAgingReport } from '../AP';
+import { NewBillModal, BillDetailModal, RecordPaymentModal, APAgingReport } from '../AP';
 import { APService, Bill, APSummary } from '../../services/APService';
 
 // Note: gl_accounts, journal_entries, and journal_entry_lines are database views, not tables
@@ -82,11 +82,14 @@ type BankReconciliation = {
   id: string;
   account_id: string;
   reconciliation_date: string;
-  statement_balance: number;
-  book_balance: number;
-  difference: number;
+  statement_balance?: number;
+  book_balance?: number;
+  difference?: number;
   status: string;
   account_name?: string;
+  statement_end_date?: string;
+  cleared_balance?: number;
+  statement_ending_balance?: number;
 };
 
 interface AccountingViewProps {
@@ -144,7 +147,6 @@ export function AccountingView({ initialView = 'dashboard' }: AccountingViewProp
 
   // AP state
   const [apSummary, setApSummary] = useState<APSummary | null>(null);
-  const [apLoading, setApLoading] = useState(false);
   const [showNewBillModal, setShowNewBillModal] = useState(false);
   const [showBillDetailModal, setShowBillDetailModal] = useState(false);
   const [showRecordPaymentModal, setShowRecordPaymentModal] = useState(false);
@@ -212,7 +214,7 @@ export function AccountingView({ initialView = 'dashboard' }: AccountingViewProp
         .order('account_number', { ascending: true });
 
       if (error) throw error;
-      setGlAccounts(data || []);
+      setGlAccounts((data as GLAccount[]) || []);
     } catch (error) {
       console.error('Error loading GL accounts:', error);
     } finally {
@@ -222,8 +224,8 @@ export function AccountingView({ initialView = 'dashboard' }: AccountingViewProp
 
   const loadJournalEntries = async () => {
     try {
-      const { data, error } = await supabase
-        .from('journal_entries')
+      const { data, error } = await (supabase
+        .from('journal_entries') as any)
         .select('*, profiles(full_name)')
         .order('entry_date', { ascending: false })
         .limit(50);
@@ -256,7 +258,7 @@ export function AccountingView({ initialView = 'dashboard' }: AccountingViewProp
 
       const { data, error } = await query;
       if (error) throw error;
-      setGlEntries(data || []);
+      setGlEntries((data as GLEntry[]) || []);
     } catch (error) {
       console.error('Error loading GL entries:', error);
     } finally {
@@ -335,8 +337,8 @@ export function AccountingView({ initialView = 'dashboard' }: AccountingViewProp
   const loadARData = async () => {
     setArLoading(true);
     try {
-      const { data, error } = await supabase
-        .from('invoices')
+      const { data, error } = await (supabase
+        .from('invoices') as any)
         .select('id, invoice_number, customer_id, issue_date, due_date, balance_due, customers(name)')
         .gt('balance_due', 0)
         .neq('status', 'cancelled')
@@ -399,20 +401,12 @@ export function AccountingView({ initialView = 'dashboard' }: AccountingViewProp
   };
 
   const loadAPData = async () => {
-    setApLoading(true);
     try {
       const summary = await APService.getAPSummary();
       setApSummary(summary);
     } catch (error) {
       console.error('Error loading AP data:', error);
-    } finally {
-      setApLoading(false);
     }
-  };
-
-  const handleViewBill = (bill: Bill) => {
-    setSelectedBill(bill);
-    setShowBillDetailModal(true);
   };
 
   const handleRecordPayment = (vendorId?: string, billId?: string) => {
@@ -452,7 +446,7 @@ export function AccountingView({ initialView = 'dashboard' }: AccountingViewProp
         .order('account_number', { ascending: true });
 
       if (accountsError) throw accountsError;
-      setCashAccounts(accounts || []);
+      setCashAccounts((accounts as GLAccount[]) || []);
 
       // Load recent reconciliations using the service
       const recons = await ReconciliationService.getReconciliations();
@@ -469,7 +463,7 @@ export function AccountingView({ initialView = 'dashboard' }: AccountingViewProp
           };
         })
       );
-      setReconciliations(reconsWithAccountNames.slice(0, 10));
+      setReconciliations(reconsWithAccountNames.slice(0, 10) as BankReconciliation[]);
     } catch (error) {
       console.error('Error loading reconciliation data:', error);
     } finally {

@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { Plus, Search, FolderKanban, Calendar, DollarSign, TrendingUp, Clock, Users, X, FileText, Building2, Layers, Trash2 } from 'lucide-react';
+import { Plus, Search, FolderKanban, Calendar, DollarSign, TrendingUp, Clock, X, Building2, Layers, Trash2 } from 'lucide-react';
 import { supabase } from '../../lib/supabase';
 import type { Database } from '../../lib/database.types';
 import { ProjectDetailView } from './ProjectDetailView';
@@ -58,7 +58,7 @@ export function ProjectsView() {
         .order('created_at', { ascending: false });
 
       if (error) throw error;
-      setProjects(data || []);
+      setProjects((data as any) || []);
     } catch (error) {
       console.error('Error loading projects:', error);
     } finally {
@@ -198,7 +198,7 @@ export function ProjectsView() {
     return matchesSearch && matchesStatus && matchesProjectType;
   });
 
-  const getStatusColor = (status: string) => {
+  const getStatusColor = (status: string | null) => {
     switch (status) {
       case 'planning':
         return 'badge-gray';
@@ -215,7 +215,7 @@ export function ProjectsView() {
     }
   };
 
-  const getPriorityColor = (priority: string) => {
+  const getPriorityColor = (priority: string | null) => {
     switch (priority) {
       case 'urgent':
         return 'text-red-600';
@@ -426,7 +426,7 @@ export function ProjectsView() {
                         </span>
                       )}
                       <span className={`badge ${getStatusColor(project.status)} text-xs`}>
-                        {project.status.replace('_', ' ')}
+                        {(project.status ?? 'active').replace('_', ' ')}
                       </span>
                     </div>
                     <p className="text-sm text-gray-600 dark:text-gray-400">
@@ -439,7 +439,7 @@ export function ProjectsView() {
                     )}
                   </div>
                   <span className={`text-xs font-medium ${getPriorityColor(project.priority)}`}>
-                    {project.priority.toUpperCase()}
+                    {(project.priority ?? 'normal').toUpperCase()}
                   </span>
                 </div>
 

@@ -8,9 +8,6 @@ import {
   FileText,
   Clock,
   User,
-  Search,
-  Filter,
-  ChevronRight,
   AlertCircle,
 } from 'lucide-react';
 import { CRMService, CustomerInteraction } from '../../services/CRMService';
@@ -58,8 +55,8 @@ export function InteractionsView() {
     return data || [];
   };
 
-  const getInteractionIcon = (type: string) => {
-    switch (type) {
+  const getInteractionIcon = (type: string | null) => {
+    switch (type ?? '') {
       case 'call':
         return Phone;
       case 'email':
@@ -77,8 +74,8 @@ export function InteractionsView() {
     }
   };
 
-  const getInteractionColor = (type: string) => {
-    switch (type) {
+  const getInteractionColor = (type: string | null) => {
+    switch (type ?? '') {
       case 'call':
         return 'bg-green-100 dark:bg-green-900/30 text-green-600';
       case 'email':
@@ -96,11 +93,13 @@ export function InteractionsView() {
     }
   };
 
-  const isOverdue = (date: string) => {
+  const isOverdue = (date: string | null) => {
+    if (!date) return false;
     return new Date(date) < new Date(new Date().toISOString().split('T')[0]);
   };
 
-  const isToday = (date: string) => {
+  const isToday = (date: string | null) => {
+    if (!date) return false;
     return date === new Date().toISOString().split('T')[0];
   };
 

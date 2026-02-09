@@ -53,7 +53,7 @@ export class VendorContractService {
         const searchLower = filters.search.toLowerCase();
         results = results.filter(contract =>
           contract.contract_number?.toLowerCase().includes(searchLower) ||
-          contract.title?.toLowerCase().includes(searchLower) ||
+          contract.notes?.toLowerCase().includes(searchLower) ||
           contract.vendors?.name?.toLowerCase().includes(searchLower)
         );
       }
@@ -154,7 +154,7 @@ export class VendorContractService {
       } else {
         const { data, error } = await supabase
           .from('vendor_contract_slas')
-          .insert(sla)
+          .insert(sla as Database['public']['Tables']['vendor_contract_slas']['Insert'])
           .select()
           .single();
 

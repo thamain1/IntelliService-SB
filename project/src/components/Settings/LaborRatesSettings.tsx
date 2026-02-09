@@ -42,13 +42,13 @@ export function LaborRatesSettings() {
       if (error && error.code !== 'PGRST116') throw error;
 
       if (data) {
-        setProfile(data);
+        setProfile((data as any));
         setFormData({
           standard_rate: Number(data.standard_rate),
           after_hours_rate: Number(data.after_hours_rate),
           emergency_rate: Number(data.emergency_rate),
-          standard_hours_start: data.standard_hours_start,
-          standard_hours_end: data.standard_hours_end,
+          standard_hours_start: data.standard_hours_start || '',
+          standard_hours_end: data.standard_hours_end || '',
           notes: data.notes || '',
         });
       }
@@ -274,9 +274,9 @@ export function LaborRatesSettings() {
 
       <div className="flex items-center justify-between pt-4 border-t border-gray-200 dark:border-gray-700">
         <div className="text-sm text-gray-600 dark:text-gray-400">
-          {profile && (
+          {profile && (profile as any).updated_at && (
             <span>
-              Last updated: {new Date(profile.updated_at).toLocaleString()}
+              Last updated: {new Date((profile as any).updated_at).toLocaleString()}
             </span>
           )}
         </div>

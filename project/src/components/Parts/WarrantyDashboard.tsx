@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { Shield, AlertTriangle, CheckCircle, Clock, Search, Calendar, MapPin, Package, Plus, FileText, DollarSign } from 'lucide-react';
+import { Shield, AlertTriangle, CheckCircle, Clock, Search, Calendar, MapPin, Package, Plus, FileText } from 'lucide-react';
 import { supabase } from '../../lib/supabase';
 import { WarrantyService, type WarrantyClaimSummary } from '../../services/WarrantyService';
 import { WarrantyClaimModal } from './WarrantyClaimModal';
@@ -54,7 +54,7 @@ export function WarrantyDashboard() {
         .order('end_date', { ascending: true });
 
       if (error) throw error;
-      setWarranties(data || []);
+      setWarranties((data || []) as WarrantyRecord[]);
     } catch (error) {
       console.error('Error loading warranties:', error);
     } finally {

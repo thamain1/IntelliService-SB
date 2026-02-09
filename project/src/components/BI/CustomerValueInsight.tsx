@@ -246,7 +246,7 @@ export function CustomerValueInsight() {
                     }}
                     itemStyle={{ color: '#F9FAFB' }}
                     labelStyle={{ color: '#F9FAFB' }}
-                    formatter={(value: number) => [`$${value.toLocaleString()}`, 'Revenue']}
+                    formatter={((value: number) => [`$${value.toLocaleString()}`, 'Revenue']) as any}
                   />
                   <Bar dataKey="revenue" radius={[0, 4, 4, 0]}>
                     {metrics.customers.slice(0, 10).map((_, index) => (

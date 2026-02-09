@@ -1,5 +1,5 @@
-import { useState, useEffect } from 'react';
-import { X, FileText, Calendar, DollarSign, TrendingUp, Users, Settings, RefreshCw, AlertTriangle, CheckCircle } from 'lucide-react';
+import { useState } from 'react';
+import { X, FileText, DollarSign, TrendingUp, Settings, RefreshCw, AlertTriangle } from 'lucide-react';
 import { supabase } from '../../lib/supabase';
 import type { Database } from '../../lib/database.types';
 import { ContractAutomationService } from '../../services/ContractAutomationService';
@@ -7,7 +7,7 @@ import { ContractAutomationService } from '../../services/ContractAutomationServ
 type ServiceContract = Database['public']['Tables']['service_contracts']['Row'] & {
   customers?: { name: string; email: string };
   customer_locations?: { location_name: string; address: string };
-  contract_plans?: { name: string; description: string };
+  contract_plans?: { name: string; description?: string };
 };
 
 interface ContractDetailModalProps {
@@ -97,7 +97,7 @@ export function ContractDetailModal({ contract: initialContract, onClose }: Cont
 
       if (fetchError) throw fetchError;
 
-      setContract(updated);
+      setContract(updated as ServiceContract);
       setEditing(false);
       alert('Contract updated successfully!');
     } catch (error: any) {
@@ -108,8 +108,8 @@ export function ContractDetailModal({ contract: initialContract, onClose }: Cont
     }
   };
 
-  const getStatusColor = (status: string) => {
-    switch (status) {
+  const getStatusColor = (status: string | null) => {
+    switch (status ?? 'active') {
       case 'active':
         return 'bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400';
       case 'draft':
@@ -203,7 +203,7 @@ export function ContractDetailModal({ contract: initialContract, onClose }: Cont
                 <div>
                   <p className="text-xs text-gray-600 dark:text-gray-400">Status</p>
                   <span className={`badge ${getStatusColor(contract.status)} mt-1`}>
-                    {contract.status.charAt(0).toUpperCase() + contract.status.slice(1)}
+                    {((contract.status ?? 'active').charAt(0).toUpperCase() + (contract.status ?? 'active').slice(1))}
                   </span>
                 </div>
                 <Settings className="w-8 h-8 text-gray-400" />
@@ -255,7 +255,7 @@ export function ContractDetailModal({ contract: initialContract, onClose }: Cont
                     Status
                   </label>
                   <select
-                    value={formData.status}
+                    value={formData.status || ''}
                     onChange={(e) => setFormData({ ...formData, status: e.target.value as any })}
                     className="input"
                   >
@@ -308,7 +308,7 @@ export function ContractDetailModal({ contract: initialContract, onClose }: Cont
                   <label className="flex items-center">
                     <input
                       type="checkbox"
-                      checked={formData.auto_renew}
+                      checked={formData.auto_renew ?? false}
                       onChange={(e) => setFormData({ ...formData, auto_renew: e.target.checked })}
                       className="w-4 h-4 text-blue-600 rounded"
                     />
@@ -368,7 +368,7 @@ export function ContractDetailModal({ contract: initialContract, onClose }: Cont
                     <div>
                       <p className="text-xs text-gray-500">Billing Frequency</p>
                       <p className="text-sm font-medium text-gray-900 dark:text-white">
-                        {contract.billing_frequency.replace('_', ' ').toUpperCase()}
+                        {(contract.billing_frequency ?? 'monthly').replace('_', ' ').toUpperCase()}
                       </p>
                     </div>
                     {contract.customer_locations && (
@@ -402,7 +402,7 @@ export function ContractDetailModal({ contract: initialContract, onClose }: Cont
                     <div>
                       <p className="text-xs text-gray-500">Priority Level</p>
                       <p className="text-sm font-medium text-gray-900 dark:text-white">
-                        {contract.priority_level.toUpperCase()}
+                        {(contract.priority_level ?? 'standard').toUpperCase()}
                       </p>
                     </div>
                     <div>

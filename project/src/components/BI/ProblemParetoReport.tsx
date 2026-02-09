@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { AlertTriangle, TrendingUp, BarChart3 } from 'lucide-react';
-import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Line, ComposedChart, Legend } from 'recharts';
+import { Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Line, ComposedChart, Legend } from 'recharts';
 import { BIPageLayout } from './BIPageLayout';
 import { DateRangeSelector } from './DateRangeSelector';
 import { useBIDateRange } from '../../hooks/useBIDateRange';
@@ -271,11 +271,11 @@ export function ProblemParetoReport() {
                     <YAxis yAxisId="left" />
                     <YAxis yAxisId="right" orientation="right" domain={[0, 100]} unit="%" />
                     <Tooltip
-                      formatter={(value: any, name: string) => {
+                      formatter={((value: any, name: string) => {
                         if (name === 'Count') return [value, 'Occurrences'];
                         if (name === 'Cumulative %') return [`${value.toFixed(1)}%`, 'Cumulative'];
                         return [value, name];
-                      }}
+                      }) as any}
                     />
                     <Legend />
                     <Bar yAxisId="left" dataKey="ticket_count" name="Count" fill="#3b82f6" />
@@ -320,7 +320,7 @@ export function ProblemParetoReport() {
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-gray-200 dark:divide-gray-700">
-                  {paretoData.map((row, index) => (
+                  {paretoData.map((row) => (
                     <tr key={row.code} className={row.cumulative_percentage <= 80 ? 'bg-red-50 dark:bg-red-900/10' : ''}>
                       <td className="px-6 py-4 whitespace-nowrap text-sm font-mono text-gray-900 dark:text-white">
                         {row.code}

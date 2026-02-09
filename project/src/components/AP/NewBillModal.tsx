@@ -40,7 +40,7 @@ export function NewBillModal({ isOpen, onClose, onBillCreated, preselectedVendor
   const [notes, setNotes] = useState('');
   const [taxAmount, setTaxAmount] = useState('0');
   const [lineItems, setLineItems] = useState<BillLineItem[]>([
-    { description: '', quantity: 1, unit_price: 0, amount: 0 },
+    { description: '', quantity: 1, unit_price: 0, amount: 0 } as BillLineItem,
   ]);
 
   useEffect(() => {
@@ -83,7 +83,7 @@ export function NewBillModal({ isOpen, onClose, onBillCreated, preselectedVendor
         .select('id, name, vendor_code, payment_terms')
         .eq('is_active', true)
         .order('name');
-      setVendors(data || []);
+      setVendors((data as Vendor[]) || []);
     } catch (err) {
       console.error('Failed to load vendors:', err);
     }
@@ -112,12 +112,12 @@ export function NewBillModal({ isOpen, onClose, onBillCreated, preselectedVendor
     setPaymentTerms('');
     setNotes('');
     setTaxAmount('0');
-    setLineItems([{ description: '', quantity: 1, unit_price: 0, amount: 0 }]);
+    setLineItems([{ description: '', quantity: 1, unit_price: 0, amount: 0 } as BillLineItem]);
     setError('');
   };
 
   const addLineItem = () => {
-    setLineItems([...lineItems, { description: '', quantity: 1, unit_price: 0, amount: 0 }]);
+    setLineItems([...lineItems, { description: '', quantity: 1, unit_price: 0, amount: 0 } as BillLineItem]);
   };
 
   const removeLineItem = (index: number) => {

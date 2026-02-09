@@ -1,15 +1,14 @@
 import { useEffect, useState } from 'react';
-import { MapPin, Package, Truck, Warehouse, Building2, Plus, Search, Hash, Wrench } from 'lucide-react';
+import { MapPin, Package, Truck, Warehouse, Building2, Plus, Search } from 'lucide-react';
 import { supabase } from '../../lib/supabase';
 import type { Database } from '../../lib/database.types';
-import { inventoryService, type SerializedPartInfo } from '../../services/InventoryService';
 
 type StockLocation = Database['public']['Tables']['stock_locations']['Row'];
 type PartInventory = Database['public']['Tables']['part_inventory']['Row'] & {
   parts?: {
     name: string;
     part_number: string;
-    unit_price: number;
+    unit_price: number | null;
     item_type?: string;
   };
   stock_locations?: {
@@ -17,7 +16,7 @@ type PartInventory = Database['public']['Tables']['part_inventory']['Row'] & {
   };
 };
 
-type LocationType = 'main_warehouse' | 'vehicle' | 'warehouse' | 'truck' | 'project_site' | 'customer_site' | 'vendor';
+type LocationType = 'warehouse' | 'truck' | 'project_site' | 'customer_site' | 'vendor' | 'main_warehouse' | 'vehicle';
 type ItemType = 'part' | 'tool';
 
 interface StockLocationsViewProps {
@@ -25,14 +24,9 @@ interface StockLocationsViewProps {
 }
 
 export function StockLocationsView({ itemType = 'part' }: StockLocationsViewProps) {
-  const isTool = itemType === 'tool';
-  const itemLabel = isTool ? 'Tool' : 'Part';
-  const itemLabelPlural = isTool ? 'Tools' : 'Parts';
-  const ItemIcon = isTool ? Wrench : Package;
   const [locations, setLocations] = useState<StockLocation[]>([]);
   const [selectedLocation, setSelectedLocation] = useState<StockLocation | null>(null);
   const [inventory, setInventory] = useState<PartInventory[]>([]);
-  const [serializedInventory, setSerializedInventory] = useState<SerializedPartInfo[]>([]);
   const [loading, setLoading] = useState(true);
   const [inventoryLoading, setInventoryLoading] = useState(false);
   const [searchTerm, setSearchTerm] = useState('');
@@ -85,10 +79,7 @@ export function StockLocationsView({ itemType = 'part' }: StockLocationsViewProp
         .order('quantity', { ascending: false });
 
       if (error) throw error;
-      setInventory(data || []);
-
-      const serialized = await inventoryService.getSerializedPartsAvailable(locationId);
-      setSerializedInventory(serialized);
+      setInventory((data || []) as PartInventory[]);
     } catch (error) {
       console.error('Error loading inventory:', error);
     } finally {
@@ -107,9 +98,10 @@ export function StockLocationsView({ itemType = 'part' }: StockLocationsViewProp
 
   const locationTypeCounts = {
     all: locations.length,
-    main_warehouse: locations.filter((l) => l.location_type === 'main_warehouse').length,
-    vehicle: locations.filter((l) => l.location_type === 'vehicle').length,
+    main_warehouse: locations.filter((l) => l.location_type === 'warehouse').length,
+    vehicle: locations.filter((l) => l.location_type === 'truck').length,
     warehouse: locations.filter((l) => l.location_type === 'warehouse').length,
+    truck: locations.filter((l) => l.location_type === 'truck').length,
   };
 
   const getLocationIcon = (type: LocationType) => {
@@ -264,7 +256,7 @@ export function StockLocationsView({ itemType = 'part' }: StockLocationsViewProp
                             )}
                           </div>
                           <p className="text-sm text-gray-500 dark:text-gray-400 mt-0.5">
-                            {location.location_type === 'vehicle' ? 'Mobile' : formatLocationType(location.location_type)}
+                            {location.location_type === 'truck' ? 'Mobile' : formatLocationType(location.location_type)}
                           </p>
                           <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
                             {formatLocationType(location.location_type)}

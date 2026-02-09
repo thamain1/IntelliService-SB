@@ -258,7 +258,7 @@ export class DataImportService {
     if (!userData.user) throw new Error('Not authenticated');
 
     const { data, error } = await supabase
-      .from('import_batches')
+      .from('import_batches' as any)
       .insert([{
         entity_type: entityType,
         file_name: fileName,
@@ -266,12 +266,12 @@ export class DataImportService {
         file_encoding: encoding,
         created_by: userData.user.id,
         status: 'pending',
-      }])
+      }] as any)
       .select()
       .single();
 
     if (error) throw error;
-    return data as ImportBatch;
+    return data as unknown as ImportBatch;
   }
 
   /**
@@ -611,7 +611,7 @@ export class DataImportService {
     }
 
     const { data, error } = await supabase
-      .from(tableName)
+      .from(tableName as any)
       .select('*')
       .eq('import_batch_id', batchId)
       .order('row_number', { ascending: true });
@@ -667,7 +667,7 @@ export class DataImportService {
     }
 
     const { data, error } = await supabase
-      .from(tableName)
+      .from(tableName as any)
       .select('*')
       .eq('import_batch_id', batchId)
       .eq('validation_status', 'valid')
@@ -695,7 +695,7 @@ export class DataImportService {
     }
 
     const { data, error } = await supabase
-      .from(tableName)
+      .from(tableName as any)
       .select('*')
       .eq('import_batch_id', batchId)
       .eq('validation_status', 'error')

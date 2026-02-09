@@ -227,7 +227,7 @@ export function FinancialsReport() {
                     }}
                     itemStyle={{ color: '#F9FAFB' }}
                     labelStyle={{ color: '#F9FAFB' }}
-                    formatter={(value: number) => [`$${value.toLocaleString()}`, 'Revenue']}
+                    formatter={((value: number) => [`$${value.toLocaleString()}`, 'Revenue']) as any}
                   />
                   <Area
                     type="monotone"
@@ -283,7 +283,7 @@ export function FinancialsReport() {
                     }}
                     itemStyle={{ color: '#F9FAFB' }}
                     labelStyle={{ color: '#F9FAFB' }}
-                    formatter={(value: number) => [`$${value.toLocaleString()}`]}
+                    formatter={((value: number) => [`$${value.toLocaleString()}`]) as any}
                   />
                   <Legend />
                 </PieChart>

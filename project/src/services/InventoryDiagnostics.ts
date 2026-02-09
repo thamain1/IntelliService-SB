@@ -34,7 +34,7 @@ export class InventoryDiagnostics {
   }
 
   private async checkInventorySync(): Promise<DiagnosticCheck> {
-    const { data, error } = await supabase.rpc('check_inventory_sync', {}, {
+    const { data, error } = await supabase.rpc('check_inventory_sync' as any, {}, {
       count: 'exact',
     }).then(() =>
       supabase.from('parts').select(`
@@ -113,8 +113,8 @@ export class InventoryDiagnostics {
         .select('part_id, quantity, parts(part_number, name)')
         .eq('stock_location_id', vehicle.id);
 
-      const { data: serialized } = await supabase
-        .from('serialized_parts')
+      const { data: serialized } = await (supabase
+        .from('serialized_parts') as any)
         .select('id, serial_number, status, parts(part_number, name)')
         .eq('current_location_id', vehicle.id)
         .in('status', ['in_stock', 'in_transit']);
@@ -151,8 +151,8 @@ export class InventoryDiagnostics {
   }
 
   private async checkSerializedPartsLocationStatus(): Promise<DiagnosticCheck> {
-    const { data, error } = await supabase
-      .from('serialized_parts')
+    const { data, error } = await (supabase
+      .from('serialized_parts') as any)
       .select('id, serial_number, status, current_location_id, installed_on_equipment_id, parts(part_number, name)');
 
     if (error) {
@@ -208,8 +208,8 @@ export class InventoryDiagnostics {
   }
 
   private async checkInstalledPartsNotInStock(): Promise<DiagnosticCheck> {
-    const { data, error } = await supabase
-      .from('serialized_parts')
+    const { data, error } = await (supabase
+      .from('serialized_parts') as any)
       .select(`
         id,
         serial_number,
@@ -266,7 +266,7 @@ export class InventoryDiagnostics {
       .from('part_inventory')
       .select('part_id, stock_location_id, count')
       .then(() =>
-        supabase.rpc('check_duplicate_inventory', {}, { count: 'exact' }).then(() =>
+        supabase.rpc('check_duplicate_inventory' as any, {}, { count: 'exact' }).then(() =>
           supabase.from('part_inventory').select('part_id, stock_location_id')
         )
       );

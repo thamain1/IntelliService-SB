@@ -208,7 +208,7 @@ export function NewContractModal({ onClose, preselectedCustomerId }: NewContract
                 <option value="">All locations</option>
                 {locations.map((location) => (
                   <option key={location.id} value={location.id}>
-                    {location.name}
+                    {(location as any).location_name || (location as any).name || 'Unnamed Location'}
                   </option>
                 ))}
               </select>
