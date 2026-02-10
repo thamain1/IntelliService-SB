@@ -1,4 +1,4 @@
-import { useState, useCallback } from 'react';
+import { useState, useCallback, useEffect } from 'react';
 import {
   ArrowLeft,
   Calendar,
@@ -151,7 +151,7 @@ export function ProjectDetailView({ projectId, onBack }: ProjectDetailViewProps)
     impact_schedule_days: 0,
   });
 
-  const _loadProjectDetails = useCallback(async () => {
+  const loadProjectDetails = useCallback(async () => {
     try {
       const { data, error } = await supabase
         .from('projects')
@@ -250,6 +250,16 @@ export function ProjectDetailView({ projectId, onBack }: ProjectDetailViewProps)
       console.error('Error loading work orders:', error);
     }
   }, [projectId]);
+
+  // Load all data on mount and when projectId changes
+  useEffect(() => {
+    loadProjectDetails();
+    loadPhases();
+    loadTasks();
+    loadChangeOrders();
+    loadIssues();
+    loadWorkOrders();
+  }, [projectId, loadProjectDetails, loadPhases, loadTasks, loadChangeOrders, loadIssues, loadWorkOrders]);
 
   const handleAddPhase = async (e: React.FormEvent) => {
     e.preventDefault();
