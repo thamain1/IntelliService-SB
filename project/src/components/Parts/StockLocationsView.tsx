@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { MapPin, Package, Truck, Warehouse, Building2, Plus, Search } from 'lucide-react';
+import { MapPin, Package, Truck, Warehouse, Building2, Plus, Search, X } from 'lucide-react';
 import { supabase } from '../../lib/supabase';
 import type { Database } from '../../lib/database.types';
 
@@ -23,6 +23,8 @@ interface StockLocationsViewProps {
   itemType?: ItemType;
 }
 
+type Profile = Database['public']['Tables']['profiles']['Row'];
+
 export function StockLocationsView({ itemType = 'part' }: StockLocationsViewProps) {
   const [locations, setLocations] = useState<StockLocation[]>([]);
   const [selectedLocation, setSelectedLocation] = useState<StockLocation | null>(null);
@@ -31,9 +33,20 @@ export function StockLocationsView({ itemType = 'part' }: StockLocationsViewProp
   const [inventoryLoading, setInventoryLoading] = useState(false);
   const [searchTerm, setSearchTerm] = useState('');
   const [locationTypeFilter, setLocationTypeFilter] = useState<string>('all');
+  const [showAddModal, setShowAddModal] = useState(false);
+  const [technicians, setTechnicians] = useState<Profile[]>([]);
+  const [saving, setSaving] = useState(false);
+  const [newLocationData, setNewLocationData] = useState({
+    name: '',
+    location_type: 'warehouse' as 'warehouse' | 'truck',
+    technician_id: '',
+    vehicle_id: '',
+    address: '',
+  });
 
   useEffect(() => {
     loadLocations();
+    loadTechnicians();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
@@ -89,11 +102,90 @@ export function StockLocationsView({ itemType = 'part' }: StockLocationsViewProp
     }
   };
 
+  const loadTechnicians = async () => {
+    try {
+      const { data, error } = await supabase
+        .from('profiles')
+        .select('*')
+        .eq('role', 'technician')
+        .eq('is_active', true)
+        .order('full_name', { ascending: true });
+
+      if (error) throw error;
+      setTechnicians(data || []);
+    } catch (error) {
+      console.error('Error loading technicians:', error);
+    }
+  };
+
+  const handleAddLocation = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setSaving(true);
+
+    try {
+      // Generate location code
+      const locationCode = `${newLocationData.location_type.toUpperCase()}-${Date.now().toString(36).toUpperCase()}`;
+
+      const { error } = await supabase
+        .from('stock_locations')
+        .insert({
+          name: newLocationData.name,
+          location_type: newLocationData.location_type,
+          location_code: locationCode,
+          technician_id: newLocationData.location_type === 'truck' && newLocationData.technician_id ? newLocationData.technician_id : null,
+          vehicle_id: newLocationData.location_type === 'truck' ? newLocationData.vehicle_id || null : null,
+          address: newLocationData.address || null,
+          is_active: true,
+          is_mobile: newLocationData.location_type === 'truck',
+        });
+
+      if (error) throw error;
+
+      // If truck with technician, update technician's default_vehicle_id
+      if (newLocationData.location_type === 'truck' && newLocationData.technician_id) {
+        const { data: newLocation } = await supabase
+          .from('stock_locations')
+          .select('id')
+          .eq('location_code', locationCode)
+          .single();
+
+        if (newLocation) {
+          await supabase
+            .from('profiles')
+            .update({ default_vehicle_id: newLocation.id })
+            .eq('id', newLocationData.technician_id);
+        }
+      }
+
+      setShowAddModal(false);
+      setNewLocationData({
+        name: '',
+        location_type: 'warehouse',
+        technician_id: '',
+        vehicle_id: '',
+        address: '',
+      });
+      loadLocations();
+    } catch (error) {
+      console.error('Error adding location:', error);
+      alert('Failed to add location. Please try again.');
+    } finally {
+      setSaving(false);
+    }
+  };
+
   const filteredLocations = locations.filter((location) => {
     const matchesSearch =
       location.name.toLowerCase().includes(searchTerm.toLowerCase());
 
-    const matchesType = locationTypeFilter === 'all' || location.location_type === locationTypeFilter;
+    // Map filter IDs to actual location_type values
+    const getActualType = (filterType: string) => {
+      if (filterType === 'vehicle') return 'truck';
+      if (filterType === 'main_warehouse') return 'warehouse';
+      return filterType;
+    };
+
+    const matchesType = locationTypeFilter === 'all' || location.location_type === getActualType(locationTypeFilter);
 
     return matchesSearch && matchesType;
   });
@@ -157,7 +249,10 @@ export function StockLocationsView({ itemType = 'part' }: StockLocationsViewProp
             View inventory levels across all warehouses, trucks, and sites
           </p>
         </div>
-        <button className="btn-primary flex items-center space-x-2">
+        <button
+          onClick={() => setShowAddModal(true)}
+          className="btn-primary flex items-center space-x-2"
+        >
           <Plus className="w-5 h-5" />
           <span>Add Location</span>
         </button>
@@ -403,6 +498,117 @@ export function StockLocationsView({ itemType = 'part' }: StockLocationsViewProp
           )}
         </div>
       </div>
+
+      {showAddModal && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+          <div className="bg-white dark:bg-gray-800 rounded-xl shadow-2xl max-w-md w-full">
+            <div className="flex items-center justify-between p-6 border-b border-gray-200 dark:border-gray-700">
+              <h2 className="text-2xl font-bold text-gray-900 dark:text-white">Add Location</h2>
+              <button
+                onClick={() => setShowAddModal(false)}
+                className="text-gray-400 hover:text-gray-600 dark:hover:text-gray-300"
+              >
+                <X className="w-6 h-6" />
+              </button>
+            </div>
+
+            <form onSubmit={handleAddLocation} className="p-6 space-y-4">
+              <div>
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                  Location Type *
+                </label>
+                <select
+                  required
+                  value={newLocationData.location_type}
+                  onChange={(e) => setNewLocationData({ ...newLocationData, location_type: e.target.value as 'warehouse' | 'truck' })}
+                  className="input"
+                >
+                  <option value="warehouse">Warehouse</option>
+                  <option value="truck">Truck / Vehicle</option>
+                </select>
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                  Location Name *
+                </label>
+                <input
+                  type="text"
+                  required
+                  value={newLocationData.name}
+                  onChange={(e) => setNewLocationData({ ...newLocationData, name: e.target.value })}
+                  className="input"
+                  placeholder={newLocationData.location_type === 'truck' ? "e.g., Service Van #1" : "e.g., Main Warehouse"}
+                />
+              </div>
+
+              {newLocationData.location_type === 'truck' && (
+                <>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                      Assigned Technician
+                    </label>
+                    <select
+                      value={newLocationData.technician_id}
+                      onChange={(e) => setNewLocationData({ ...newLocationData, technician_id: e.target.value })}
+                      className="input"
+                    >
+                      <option value="">Select a technician (optional)</option>
+                      {technicians.map((tech) => (
+                        <option key={tech.id} value={tech.id}>
+                          {tech.full_name}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                      License Plate / Asset #
+                    </label>
+                    <input
+                      type="text"
+                      value={newLocationData.vehicle_id}
+                      onChange={(e) => setNewLocationData({ ...newLocationData, vehicle_id: e.target.value })}
+                      className="input"
+                      placeholder="e.g., ABC-1234"
+                    />
+                  </div>
+                </>
+              )}
+
+              {newLocationData.location_type === 'warehouse' && (
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                    Address
+                  </label>
+                  <input
+                    type="text"
+                    value={newLocationData.address}
+                    onChange={(e) => setNewLocationData({ ...newLocationData, address: e.target.value })}
+                    className="input"
+                    placeholder="123 Main St, City, State"
+                  />
+                </div>
+              )}
+
+              <div className="flex space-x-3 pt-4 border-t border-gray-200 dark:border-gray-700">
+                <button
+                  type="button"
+                  onClick={() => setShowAddModal(false)}
+                  disabled={saving}
+                  className="btn btn-outline flex-1"
+                >
+                  Cancel
+                </button>
+                <button type="submit" disabled={saving} className="btn btn-primary flex-1">
+                  {saving ? 'Adding...' : 'Add Location'}
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

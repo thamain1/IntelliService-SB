@@ -209,6 +209,7 @@ function AppContent() {
       case 'settings-labor-rates':
       case 'settings-notifications':
       case 'settings-permissions':
+      case 'settings-vehicles':
         return <SettingsView initialTab={currentView} />;
       case 'settings-contract-plans':
         return <ContractPlansView />;
