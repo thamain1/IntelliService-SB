@@ -39,6 +39,7 @@ import {
   Activity,
   BarChart3,
   Truck,
+  Brain,
 } from 'lucide-react';
 
 export interface NavigationItem {
@@ -59,6 +60,21 @@ export interface NavigationGroup {
 }
 
 export const navigationConfig: NavigationGroup[] = [
+  // LOCAL DEMO ONLY - Neural Command at TOP
+  {
+    id: 'neural-command',
+    label: 'Neural Command',
+    icon: Brain,
+    roles: ['admin'],
+    children: [
+      {
+        id: 'neural-hub',
+        label: 'Command Hub',
+        icon: Brain,
+        roles: ['admin'],
+      },
+    ],
+  },
   {
     id: 'field-ops',
     label: 'Field Operations',
@@ -483,6 +499,12 @@ export const navigationConfig: NavigationGroup[] = [
             id: 'reports-margins',
             label: 'Project Margins',
             icon: TrendingUp,
+            roles: ['admin', 'dispatcher'],
+          },
+          {
+            id: 'reports-copq',
+            label: 'Cost of Poor Quality',
+            icon: AlertTriangle,
             roles: ['admin', 'dispatcher'],
           },
         ],

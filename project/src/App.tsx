@@ -36,8 +36,11 @@ const RevenueTrendsInsight = lazy(() => import('./components/BI/RevenueTrendsIns
 const CustomerValueInsight = lazy(() => import('./components/BI/CustomerValueInsight').then(m => ({ default: m.CustomerValueInsight })));
 const DSOInsight = lazy(() => import('./components/BI/DSOInsight').then(m => ({ default: m.DSOInsight })));
 const LaborEfficiencyInsight = lazy(() => import('./components/BI/LaborEfficiencyInsight').then(m => ({ default: m.LaborEfficiencyInsight })));
+const COPQReport = lazy(() => import('./components/BI/COPQReport').then(m => ({ default: m.COPQReport })));
 const HelpView = lazy(() => import('./components/Help/HelpView').then(m => ({ default: m.HelpView })));
 const CRMView = lazy(() => import('./components/CRM/CRMView').then(m => ({ default: m.CRMView })));
+// LOCAL DEMO ONLY - Neural Command
+const NeuralCommandView = lazy(() => import('./components/Neural/NeuralCommandView'));
 
 // Loading spinner for Suspense fallback
 const LoadingSpinner = () => (
@@ -102,6 +105,9 @@ function AppContent() {
 
   const renderView = () => {
     switch (currentView) {
+      // LOCAL DEMO ONLY - Neural Command
+      case 'neural-hub':
+        return <NeuralCommandView />;
       case 'dashboard':
         return <DashboardView onNavigate={handleNavigateWithFilter} />;
       case 'tickets':
@@ -195,6 +201,8 @@ function AppContent() {
         return <TechnicianMetricsReport />;
       case 'reports-margins':
         return <ProjectMarginsReport />;
+      case 'reports-copq':
+        return <COPQReport />;
       case 'insights':
       case 'insights-revenue':
         return <RevenueTrendsInsight />;

@@ -1,4 +1,5 @@
 import {
+  Brain,
   LayoutDashboard,
   Ticket,
   Calendar,

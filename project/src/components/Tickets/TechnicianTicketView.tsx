@@ -1,8 +1,9 @@
-import { useEffect, useState } from 'react';
-import { Camera, Package, MessageSquare, CheckCircle, Clock, AlertTriangle, MapPin, Phone, User, Plus, X, History, Eye, AlertOctagon, PackageX, Navigation, ClipboardList } from 'lucide-react';
+import { useEffect, useState, useRef } from 'react';
+import { Camera, Package, MessageSquare, CheckCircle, Clock, AlertTriangle, MapPin, Phone, User, Plus, X, History, Eye, AlertOctagon, PackageX, Navigation, ClipboardList, Brain, Wrench, Zap, AlertCircle } from 'lucide-react';
 import { supabase } from '../../lib/supabase';
 import { useAuth } from '../../contexts/AuthContext';
 import { holdTicketForParts, reportTicketIssue } from '../../services/TicketHoldService';
+import { LiveDataService, EquipmentIntelligence } from '../../services/agents/LiveDataService';
 
 type ActiveTimer = {
   has_active_timer: boolean;
@@ -39,7 +40,10 @@ type Ticket = {
   completed_date?: string | null;
   site_contact_name?: string | null;
   site_contact_phone?: string | null;
+  customer_id?: string | null;
+  equipment_id?: string | null;
   customers: {
+    id: string;
     name: string;
     phone: string | null;
     email: string | null;
@@ -128,6 +132,12 @@ export function TechnicianTicketView() {
   const [onSiteProgress, setOnSiteProgress] = useState<OnSiteProgress | null>(null);
   const [showHistory, setShowHistory] = useState(false);
 
+  // Co-Pilot Equipment Intelligence state
+  const [equipmentIntel, setEquipmentIntel] = useState<EquipmentIntelligence | null>(null);
+  const [loadingIntel, setLoadingIntel] = useState(false);
+  const [intelError, setIntelError] = useState<string | null>(null);
+  const [noEquipmentRegistered, setNoEquipmentRegistered] = useState(false);
+
   const [showUpdateModal, setShowUpdateModal] = useState(false);
   const [showPartsModal, setShowPartsModal] = useState(false);
   const [showPhotoModal, setShowPhotoModal] = useState(false);
@@ -192,12 +202,91 @@ export function TechnicianTicketView() {
       loadOnSiteProgress(selectedTicket.id);
       // Re-check shift clock-in status when viewing a ticket
       checkShiftClockIn();
+      // Equipment Intelligence is loaded by dedicated useEffect below
     } else {
       console.log('No ticket selected');
       setOnSiteProgress(null);
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [selectedTicket]);
+
+  // Co-Pilot: Fetch equipment intelligence when ticket selected
+  // Check both customer_id and customers.id (nested relation)
+  const customerId = selectedTicket?.customer_id || (selectedTicket?.customers as any)?.id;
+  const ticketId = selectedTicket?.id;
+
+  // Track previous values to detect changes
+  const prevTicketIdRef = useRef<string | undefined>();
+  const prevCustomerIdRef = useRef<string | undefined>();
+
+  useEffect(() => {
+    const prevTicketId = prevTicketIdRef.current;
+    const prevCustomerId = prevCustomerIdRef.current;
+    prevTicketIdRef.current = ticketId;
+    prevCustomerIdRef.current = customerId;
+
+    console.log('[Co-Pilot] Effect triggered:', {
+      ticketId,
+      customerId,
+      prevTicketId,
+      prevCustomerId,
+      ticketChanged: ticketId !== prevTicketId,
+      customerChanged: customerId !== prevCustomerId,
+    });
+
+    // Only clear equipment intel when ticket actually deselected
+    if (!ticketId) {
+      console.log('[Co-Pilot] No ticket selected, clearing intel');
+      setEquipmentIntel(null);
+      setIntelError(null);
+      setLoadingIntel(false);
+      setNoEquipmentRegistered(false);
+      return;
+    }
+
+    // If no customer ID, don't fetch but don't clear existing data
+    if (!customerId) {
+      console.log('[Co-Pilot] No customer ID for ticket:', ticketId);
+      return;
+    }
+
+    // Only fetch if this is a new ticket or customer changed
+    if (ticketId === prevTicketId && customerId === prevCustomerId) {
+      console.log('[Co-Pilot] Same ticket and customer, skipping fetch');
+      return;
+    }
+
+    const loadEquipmentIntel = async () => {
+      console.log('[Co-Pilot] Fetching equipment for:', {
+        ticket: selectedTicket?.ticket_number,
+        customerId: customerId
+      });
+
+      setLoadingIntel(true);
+      setIntelError(null);
+      try {
+        const intelList = await LiveDataService.getCustomerEquipmentIntelligence(customerId);
+        console.log('[Co-Pilot] Equipment intel result:', intelList?.length || 0, 'items', intelList);
+        if (intelList && intelList.length > 0) {
+          setEquipmentIntel(intelList[0]);
+          setNoEquipmentRegistered(false);
+          console.log('[Co-Pilot] Set equipment intel:', intelList[0]);
+        } else {
+          console.log('[Co-Pilot] No equipment found for customer - showing ticket analysis');
+          setEquipmentIntel(null);
+          setNoEquipmentRegistered(true);
+        }
+      } catch (error) {
+        console.error('[Co-Pilot] Error loading equipment intelligence:', error);
+        setEquipmentIntel(null);
+        setNoEquipmentRegistered(true);
+        setIntelError('Unable to load equipment data');
+      } finally {
+        setLoadingIntel(false);
+      }
+    };
+    loadEquipmentIntel();
+  }, [ticketId, customerId]);
 
   useEffect(() => {
     if (!selectedTicket || viewMode === 'readonly') return;
@@ -284,7 +373,7 @@ export function TechnicianTicketView() {
     try {
       const { data, error } = await supabase
         .from('tickets')
-        .select('*, customers!tickets_customer_id_fkey(name, phone, email, address), equipment(equipment_type, model_number)')
+        .select('*, customers!tickets_customer_id_fkey(id, name, phone, email, address), equipment(equipment_type, model_number)')
         .eq('assigned_to', profile.id)
         .in('status', ['completed', 'closed_billed'])
         .order('completed_date', { ascending: false })
@@ -301,7 +390,7 @@ export function TechnicianTicketView() {
       // Get tickets directly assigned via tickets.assigned_to
       const { data: directTickets, error: directError } = await supabase
         .from('tickets')
-        .select('*, customers!tickets_customer_id_fkey(name, phone, email, address), equipment(equipment_type, model_number)')
+        .select('*, customers!tickets_customer_id_fkey(id, name, phone, email, address), equipment(equipment_type, model_number)')
         .eq('assigned_to', profile?.id ?? '')
         .in('status', ['open', 'scheduled', 'in_progress'])
         .order('scheduled_date', { ascending: true });
@@ -328,7 +417,7 @@ export function TechnicianTicketView() {
       if (additionalTicketIds.length > 0) {
         const { data: assignedTickets, error: assignedError } = await supabase
           .from('tickets')
-          .select('*, customers!tickets_customer_id_fkey(name, phone, email, address), equipment(equipment_type, model_number)')
+          .select('*, customers!tickets_customer_id_fkey(id, name, phone, email, address), equipment(equipment_type, model_number)')
           .in('id', additionalTicketIds)
           .in('status', ['open', 'scheduled', 'in_progress'])
           .order('scheduled_date', { ascending: true });
@@ -867,6 +956,58 @@ export function TechnicianTicketView() {
     }
   };
 
+  // Co-Pilot: Analyze ticket description for insights
+  const getTicketInsights = (ticket: Ticket) => {
+    const title = (ticket.title || '').toLowerCase();
+    const description = (ticket.description || '').toLowerCase();
+    const combined = `${title} ${description}`;
+
+    const insights: { icon: string; text: string; priority: 'high' | 'medium' | 'low' }[] = [];
+
+    // Safety concerns
+    if (combined.includes('gas leak') || combined.includes('carbon monoxide') || combined.includes('co detector')) {
+      insights.push({ icon: '⚠️', text: 'SAFETY: Gas leak suspected - ensure proper ventilation and use gas detector', priority: 'high' });
+    }
+    if (combined.includes('electrical') || combined.includes('shock') || combined.includes('sparking')) {
+      insights.push({ icon: '⚡', text: 'SAFETY: Electrical hazard - disconnect power before inspection', priority: 'high' });
+    }
+
+    // Common HVAC issues
+    if (combined.includes('no heat') || combined.includes('not heating')) {
+      insights.push({ icon: '🔥', text: 'Check: Thermostat settings, pilot light, gas valve, igniter, flame sensor', priority: 'medium' });
+    }
+    if (combined.includes('no cool') || combined.includes('not cooling') || combined.includes('no ac')) {
+      insights.push({ icon: '❄️', text: 'Check: Thermostat, refrigerant levels, condenser coils, compressor, capacitor', priority: 'medium' });
+    }
+    if (combined.includes('noise') || combined.includes('loud') || combined.includes('banging') || combined.includes('squealing')) {
+      insights.push({ icon: '🔊', text: 'Check: Blower motor, fan blades, loose components, belt tension', priority: 'medium' });
+    }
+    if (combined.includes('leak') || combined.includes('water')) {
+      insights.push({ icon: '💧', text: 'Check: Condensate drain, drain pan, refrigerant lines, coil freeze-up', priority: 'medium' });
+    }
+    if (combined.includes('smell') || combined.includes('odor') || combined.includes('burning')) {
+      insights.push({ icon: '👃', text: 'Check: Air filter, electrical connections, motor overheating, ductwork', priority: 'medium' });
+    }
+    if (combined.includes('short cycling') || combined.includes('turns on and off')) {
+      insights.push({ icon: '🔄', text: 'Check: Thermostat placement, refrigerant charge, airflow restrictions, oversized unit', priority: 'medium' });
+    }
+    if (combined.includes('high bill') || combined.includes('utility') || combined.includes('efficiency')) {
+      insights.push({ icon: '💰', text: 'Check: Air filter, duct leaks, insulation, system age - discuss upgrade options', priority: 'low' });
+    }
+
+    // Maintenance reminders
+    if (combined.includes('maintenance') || combined.includes('tune up') || combined.includes('annual')) {
+      insights.push({ icon: '🔧', text: 'Perform: Filter check, coil cleaning, electrical inspection, refrigerant check', priority: 'low' });
+    }
+
+    // If no specific insights, provide general guidance
+    if (insights.length === 0) {
+      insights.push({ icon: '📋', text: 'Perform standard diagnostic: Visual inspection, operational test, customer interview', priority: 'low' });
+    }
+
+    return insights;
+  };
+
   const getStatusColor = (status: string | null) => {
     switch (status) {
       case 'open': return 'badge-blue';
@@ -1000,6 +1141,198 @@ export function TechnicianTicketView() {
 
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
           <div className="lg:col-span-2 space-y-6">
+            {/* Co-Pilot Advisory Card - AI Intelligence for Technicians */}
+            {(equipmentIntel || loadingIntel || intelError || noEquipmentRegistered) && (
+              <div className={`rounded-xl p-4 border-2 ${
+                intelError
+                  ? 'bg-gradient-to-r from-gray-50 to-gray-100 dark:from-gray-800/50 dark:to-gray-700/50 border-gray-300 dark:border-gray-500/50'
+                  : equipmentIntel?.isChronic
+                    ? 'bg-gradient-to-r from-red-50 to-orange-50 dark:from-red-900/20 dark:to-orange-900/20 border-red-300 dark:border-red-500/50'
+                    : noEquipmentRegistered
+                      ? 'bg-gradient-to-r from-blue-50 to-cyan-50 dark:from-blue-900/20 dark:to-cyan-900/20 border-blue-300 dark:border-blue-500/50'
+                      : 'bg-gradient-to-r from-purple-50 to-blue-50 dark:from-purple-900/20 dark:to-blue-900/20 border-purple-300 dark:border-purple-500/50'
+              }`}>
+                <div className="flex items-center gap-3 mb-3">
+                  <div className={`p-2 rounded-lg ${
+                    intelError
+                      ? 'bg-gray-100 dark:bg-gray-700/30'
+                      : equipmentIntel?.isChronic
+                        ? 'bg-red-100 dark:bg-red-800/30'
+                        : noEquipmentRegistered
+                          ? 'bg-blue-100 dark:bg-blue-800/30'
+                          : 'bg-purple-100 dark:bg-purple-800/30'
+                  }`}>
+                    <Brain className={`w-5 h-5 ${
+                      intelError
+                        ? 'text-gray-500 dark:text-gray-400'
+                        : equipmentIntel?.isChronic
+                          ? 'text-red-600 dark:text-red-400'
+                          : noEquipmentRegistered
+                            ? 'text-blue-600 dark:text-blue-400'
+                            : 'text-purple-600 dark:text-purple-400'
+                    }`} />
+                  </div>
+                  <div>
+                    <h3 className={`font-bold text-sm ${
+                      intelError
+                        ? 'text-gray-600 dark:text-gray-400'
+                        : equipmentIntel?.isChronic
+                          ? 'text-red-700 dark:text-red-400'
+                          : noEquipmentRegistered
+                            ? 'text-blue-700 dark:text-blue-400'
+                            : 'text-purple-700 dark:text-purple-400'
+                    }`}>
+                      Tech Co-Pilot Advisory
+                    </h3>
+                    <p className="text-xs text-gray-500 dark:text-gray-400">
+                      {noEquipmentRegistered ? 'Ticket Analysis Mode' : 'AI-Powered Diagnostic Signal'}
+                    </p>
+                  </div>
+                  {equipmentIntel?.isChronic && (
+                    <span className="ml-auto px-2 py-1 text-xs font-bold rounded-full bg-red-100 dark:bg-red-800/30 text-red-700 dark:text-red-400 animate-pulse">
+                      CHRONIC UNIT
+                    </span>
+                  )}
+                  {noEquipmentRegistered && !equipmentIntel && (
+                    <span className="ml-auto px-2 py-1 text-xs font-medium rounded-full bg-amber-100 dark:bg-amber-800/30 text-amber-700 dark:text-amber-400">
+                      NO EQUIPMENT
+                    </span>
+                  )}
+                </div>
+
+                {loadingIntel ? (
+                  <div className="flex items-center gap-2 text-sm text-gray-500 dark:text-gray-400">
+                    <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-purple-600"></div>
+                    <span>Analyzing equipment history...</span>
+                  </div>
+                ) : intelError ? (
+                  <div className="flex items-center gap-2 text-sm text-gray-500 dark:text-gray-400">
+                    <AlertCircle className="w-4 h-4" />
+                    <span>{intelError} - Manual inspection recommended</span>
+                  </div>
+                ) : noEquipmentRegistered && !equipmentIntel ? (
+                  <div className="space-y-3">
+                    {/* No Equipment Notice */}
+                    <div className="flex items-start gap-3 p-2 bg-amber-50 dark:bg-amber-900/20 rounded-lg">
+                      <AlertCircle className="w-4 h-4 text-amber-600 dark:text-amber-400 mt-0.5 flex-shrink-0" />
+                      <div className="text-sm">
+                        <p className="font-medium text-amber-700 dark:text-amber-400">No equipment registered for this customer</p>
+                        <p className="text-amber-600 dark:text-amber-300 text-xs mt-1">Consider adding equipment after service for future diagnostics</p>
+                      </div>
+                    </div>
+
+                    {/* Ticket-Based Insights */}
+                    <div className="border-t border-blue-200 dark:border-blue-700 pt-3">
+                      <p className="text-xs font-semibold text-blue-700 dark:text-blue-400 uppercase tracking-wider mb-2">
+                        Diagnostic Suggestions Based on Ticket
+                      </p>
+                      <div className="space-y-2">
+                        {getTicketInsights(selectedTicket).map((insight, idx) => (
+                          <div
+                            key={idx}
+                            className={`flex items-start gap-2 p-2 rounded-lg ${
+                              insight.priority === 'high'
+                                ? 'bg-red-50 dark:bg-red-900/20'
+                                : insight.priority === 'medium'
+                                  ? 'bg-blue-50 dark:bg-blue-900/20'
+                                  : 'bg-gray-50 dark:bg-gray-800/50'
+                            }`}
+                          >
+                            <span className="text-base flex-shrink-0">{insight.icon}</span>
+                            <p className={`text-sm ${
+                              insight.priority === 'high'
+                                ? 'text-red-700 dark:text-red-300 font-medium'
+                                : insight.priority === 'medium'
+                                  ? 'text-blue-700 dark:text-blue-300'
+                                  : 'text-gray-600 dark:text-gray-400'
+                            }`}>
+                              {insight.text}
+                            </p>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+
+                    {/* Footer */}
+                    <div className="flex items-center justify-between pt-2 border-t border-blue-200 dark:border-blue-700">
+                      <span className="text-xs text-gray-500 dark:text-gray-400">
+                        Based on: "{selectedTicket.title}"
+                      </span>
+                      <span className="text-xs text-blue-600 dark:text-blue-400 font-medium">
+                        Powered by Neural Command
+                      </span>
+                    </div>
+                  </div>
+                ) : equipmentIntel ? (
+                  <div className="space-y-3">
+                    {/* Equipment Summary */}
+                    <div className="flex items-start gap-3">
+                      <Wrench className="w-4 h-4 text-gray-500 dark:text-gray-400 mt-0.5" />
+                      <div className="text-sm">
+                        <p className="font-medium text-gray-900 dark:text-white">
+                          {equipmentIntel.equipment.equipmentType}
+                          {equipmentIntel.equipment.modelNumber && ` - ${equipmentIntel.equipment.modelNumber}`}
+                        </p>
+                        <p className="text-gray-500 dark:text-gray-400">
+                          {equipmentIntel.ageYears} years old | {equipmentIntel.totalServiceCalls} service calls
+                          {equipmentIntel.serviceCallsLast12Months >= 3 && (
+                            <span className="text-red-600 dark:text-red-400 font-medium"> ({equipmentIntel.serviceCallsLast12Months} in last 12mo)</span>
+                          )}
+                        </p>
+                      </div>
+                    </div>
+
+                    {/* Chronic Unit Warning */}
+                    {equipmentIntel.isChronic && (
+                      <div className="bg-red-100 dark:bg-red-900/30 rounded-lg p-3">
+                        <div className="flex items-start gap-2">
+                          <AlertCircle className="w-5 h-5 text-red-600 dark:text-red-400 flex-shrink-0" />
+                          <div>
+                            <p className="font-bold text-red-700 dark:text-red-400 text-sm">
+                              {equipmentIntel.recommendedAction === 'replace' ? 'Replacement Recommended' : 'High-Frequency Service Unit'}
+                            </p>
+                            <p className="text-red-600 dark:text-red-300 text-sm mt-1">
+                              {equipmentIntel.chronicReason}
+                            </p>
+                            <p className="text-red-600 dark:text-red-300 text-sm mt-2 font-medium">
+                              <Zap className="w-3 h-3 inline mr-1" />
+                              Consider discussing {equipmentIntel.recommendedAction === 'replace' ? 'replacement options' : 'extended service plan'} with customer.
+                            </p>
+                          </div>
+                        </div>
+                      </div>
+                    )}
+
+                    {/* Warranty Status */}
+                    {equipmentIntel.warrantyStatus !== 'unknown' && (
+                      <div className="flex items-center gap-2 text-sm">
+                        <span className={`px-2 py-0.5 rounded-full text-xs font-medium ${
+                          equipmentIntel.warrantyStatus === 'active'
+                            ? 'bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-400'
+                            : 'bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-400'
+                        }`}>
+                          Warranty: {equipmentIntel.warrantyStatus.toUpperCase()}
+                        </span>
+                        {equipmentIntel.warrantyStatus === 'expired' && (
+                          <span className="text-gray-500 dark:text-gray-400 text-xs">Customer pays full cost</span>
+                        )}
+                      </div>
+                    )}
+
+                    {/* Confidence Score */}
+                    <div className="flex items-center justify-between pt-2 border-t border-gray-200 dark:border-gray-700">
+                      <span className="text-xs text-gray-500 dark:text-gray-400">
+                        Diagnostic Confidence: {equipmentIntel.confidenceScore}%
+                      </span>
+                      <span className="text-xs text-purple-600 dark:text-purple-400 font-medium">
+                        Powered by Neural Command
+                      </span>
+                    </div>
+                  </div>
+                ) : null}
+              </div>
+            )}
+
             <div className="card p-6">
               <h2 className="text-lg font-bold text-gray-900 dark:text-white mb-4">Job Details</h2>
               <div className="space-y-3">
@@ -2002,7 +2335,7 @@ export function TechnicianTicketView() {
                   try {
                     const { data, error } = await supabase
                       .from('tickets')
-                      .select('*, customers!tickets_customer_id_fkey(name, phone, email, address), equipment(equipment_type, model_number)')
+                      .select('*, customers!tickets_customer_id_fkey(id, name, phone, email, address), equipment(equipment_type, model_number)')
                       .eq('id', activeTimer.ticket_id)
                       .single();
 
