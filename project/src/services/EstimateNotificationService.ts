@@ -1,7 +1,5 @@
 import { supabase } from '../lib/supabase';
 import { NotificationService } from './NotificationService';
-import { AHSTicketService } from './AHSTicketService';
-import { AHSInvoiceService } from './AHSInvoiceService';
 import { Tables } from '../lib/dbTypes';
 
 // Composite type for estimate with joined customer and ticket data
@@ -10,7 +8,7 @@ type EstimateWithJoins = Pick<
   'id' | 'estimate_number' | 'total_amount' | 'accepted_date' | 'converted_to_ticket_id' | 'updated_by'
 > & {
   customer: Pick<Tables<'customers'>, 'name'> | null;
-  ticket: Pick<Tables<'tickets'>, 'ticket_number' | 'ticket_type'> | null;
+  ticket: Pick<Tables<'tickets'>, 'ticket_number'> | null;
 };
 
 export interface EstimateAcceptanceDetails {
@@ -22,7 +20,6 @@ export interface EstimateAcceptanceDetails {
   total: number;
   acceptedAt: string;
   acceptedBy: string | null;
-  isAHSTicket: boolean;
   ahsCoveredAmount: number | null;
   customerResponsibility: number | null;
 }
@@ -44,27 +41,8 @@ export class EstimateNotificationService {
         return;
       }
 
-      // Calculate AHS split if applicable
-      let ahsCoveredAmount: number | null = null;
-      let customerResponsibility: number | null = null;
-
-      if (details.isAHSTicket && details.ticketId) {
-        const breakdown = await AHSInvoiceService.getTicketBillingBreakdown(
-          details.ticketId
-        );
-
-        // If we don't have invoice data yet, calculate from estimate
-        if (breakdown.ahsTotal === 0 && breakdown.customerTotal === 0) {
-          const ahsTicketData = await AHSTicketService.getAHSTicketData(
-            details.ticketId
-          );
-          ahsCoveredAmount = ahsTicketData?.coveredAmount || 0;
-          customerResponsibility = Math.max(0, details.total - (ahsCoveredAmount || 0));
-        } else {
-          ahsCoveredAmount = breakdown.ahsTotal;
-          customerResponsibility = breakdown.customerTotal;
-        }
-      }
+      const ahsCoveredAmount: number | null = null;
+      const customerResponsibility: number | null = null;
 
       // Build notification message
       const message = this.buildNotificationMessage({
@@ -85,7 +63,6 @@ export class EstimateNotificationService {
           ticketNumber: details.ticketNumber,
           customerName: details.customerName,
           total: details.total,
-          isAHSTicket: details.isAHSTicket,
           ahsCoveredAmount,
           customerResponsibility,
           acceptedBy: acceptedBy || details.acceptedBy,
@@ -163,7 +140,7 @@ export class EstimateNotificationService {
           updated_by,
           converted_to_ticket_id,
           customer:customers(name),
-          ticket:tickets(ticket_number, ticket_type)
+          ticket:tickets(ticket_number)
         `)
         .eq('id', estimateId)
         .maybeSingle();
@@ -185,7 +162,6 @@ export class EstimateNotificationService {
         total: data.total_amount || 0,
         acceptedAt: data.accepted_date || new Date().toISOString(),
         acceptedBy: data.updated_by,
-        isAHSTicket: AHSTicketService.isAHSTicket(ticket?.ticket_type),
         ahsCoveredAmount: null,
         customerResponsibility: null,
       };
@@ -210,15 +186,6 @@ export class EstimateNotificationService {
     }
 
     parts.push(`Total: $${details.total.toFixed(2)}`);
-
-    if (details.isAHSTicket && details.ahsCoveredAmount !== null) {
-      parts.push(`AHS Covered: $${details.ahsCoveredAmount.toFixed(2)}`);
-      if (details.customerResponsibility !== null) {
-        parts.push(
-          `Customer Responsibility: $${details.customerResponsibility.toFixed(2)}`
-        );
-      }
-    }
 
     return parts.join(' | ');
   }

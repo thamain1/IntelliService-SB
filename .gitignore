@@ -30,3 +30,4 @@ docs/
 **/supabasepw*.txt
 **/*credentials*
 **/*password*
+*supabase*.txt

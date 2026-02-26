@@ -5,10 +5,9 @@ import { CompanySettings } from './CompanySettings';
 import { NotificationsSettings } from './NotificationsSettings';
 import { PermissionsSettings } from './PermissionsSettings';
 import { LaborRatesSettings } from './LaborRatesSettings';
-import { AHSSettingsPanel } from './AHSSettingsPanel';
 import { VehiclesSettings } from './VehiclesSettings';
 
-type SettingsTab = 'users' | 'company' | 'notifications' | 'permissions' | 'labor-rates' | 'ahs-warranty' | 'vehicles';
+type SettingsTab = 'users' | 'company' | 'notifications' | 'permissions' | 'labor-rates' | 'vehicles';
 
 interface SettingsViewProps {
   initialTab?: string;
@@ -41,7 +40,6 @@ export function SettingsView({ initialTab }: SettingsViewProps) {
     { id: 'company' as SettingsTab, label: 'Company', icon: Building },
     { id: 'labor-rates' as SettingsTab, label: 'Labor Rates', icon: DollarSign },
     { id: 'vehicles' as SettingsTab, label: 'Vehicles', icon: Truck },
-    { id: 'ahs-warranty' as SettingsTab, label: 'AHS Warranty', icon: Shield },
     { id: 'notifications' as SettingsTab, label: 'Notifications', icon: Bell },
     { id: 'permissions' as SettingsTab, label: 'Permissions', icon: Shield },
   ];
@@ -56,8 +54,6 @@ export function SettingsView({ initialTab }: SettingsViewProps) {
         return <LaborRatesSettings />;
       case 'vehicles':
         return <VehiclesSettings />;
-      case 'ahs-warranty':
-        return <AHSSettingsPanel />;
       case 'notifications':
         return <NotificationsSettings />;
       case 'permissions':

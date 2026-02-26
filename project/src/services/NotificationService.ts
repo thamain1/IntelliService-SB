@@ -285,8 +285,6 @@ export class NotificationService {
         return { icon: 'CheckCircle', color: 'green', label: 'Estimate Accepted' };
       case 'estimate_declined':
         return { icon: 'XCircle', color: 'red', label: 'Estimate Declined' };
-      case 'ahs_authorization':
-        return { icon: 'Shield', color: 'blue', label: 'AHS Authorization' };
       case 'ticket_hold':
         return { icon: 'Pause', color: 'yellow', label: 'Ticket On Hold' };
       case 'parts_request':
