@@ -1,6 +1,6 @@
 # IntelliService
 
-A comprehensive field service management application built for HVAC and service businesses.
+A comprehensive field service management application built for field service and project oriented businesses.
 
 ## Features
 
