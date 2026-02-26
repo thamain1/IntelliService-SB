@@ -2,6 +2,7 @@ import { useEffect, useState, useCallback } from 'react';
 import { Calendar, Download, RefreshCw, AlertCircle, Filter, Building2, Wrench } from 'lucide-react';
 import { JobPLService, JobPLSummary, JobType, JobStatus } from '../../services/JobPLService';
 import { supabase } from '../../lib/supabase';
+import { useCompany } from '../../contexts/CompanyContext';
 
 interface JobPLReportViewProps {
   onExportPDF?: () => void;
@@ -13,6 +14,7 @@ interface Customer {
 }
 
 export function JobPLReportView({ onExportPDF }: JobPLReportViewProps) {
+  const { companyName } = useCompany();
   const [loading, setLoading] = useState(true);
   const [report, setReport] = useState<JobPLSummary | null>(null);
   const [error, setError] = useState<string | null>(null);
@@ -243,7 +245,7 @@ export function JobPLReportView({ onExportPDF }: JobPLReportViewProps) {
         <div className="card p-8">
           <div className="text-center mb-8">
             <h3 className="text-2xl font-bold text-gray-900 dark:text-white">
-              Dunaway Heating & Cooling
+              {companyName}
             </h3>
             <p className="text-lg text-gray-600 dark:text-gray-400 mt-1">Profit & Loss by Job</p>
             <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">

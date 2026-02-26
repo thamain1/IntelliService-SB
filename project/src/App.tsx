@@ -279,8 +279,8 @@ function AppContent() {
             </svg>
           </button>
           <img
-            src="/image.png"
-            alt="Dunaway Logo"
+            src="/logo.png"
+            alt="IntelliService"
             className="h-12 w-auto object-contain"
           />
           <button
