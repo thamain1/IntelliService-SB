@@ -42,8 +42,8 @@ export function LoginForm() {
         <div className="card p-8 shadow-2xl">
           <div className="flex flex-col items-center mb-8">
             <img
-              src="/image.png"
-              alt="Dunaway Logo"
+              src="/logo.png"
+              alt="IntelliService"
               className="h-32 w-auto object-contain mb-4"
             />
             <p className="text-gray-600 dark:text-gray-400 text-center">
