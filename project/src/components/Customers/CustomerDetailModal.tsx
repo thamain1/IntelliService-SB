@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { X, Mail, Phone, MapPin, Edit, Trash2, Package, Wrench, FileText, Calendar, DollarSign, TrendingUp, AlertCircle } from 'lucide-react';
+import { X, Mail, Phone, MapPin, Edit, Trash2, Package, Wrench, FileText, Calendar, DollarSign, TrendingUp, AlertCircle, Image } from 'lucide-react';
 import { supabase } from '../../lib/supabase';
 import type { Database } from '../../lib/database.types';
 import { useAuth } from '../../contexts/AuthContext';
@@ -24,6 +24,9 @@ type InstalledPart = Database['public']['Tables']['customer_parts_installed']['R
   parts?: { name: string; part_number: string };
   profiles?: { full_name: string };
 };
+type TicketPhoto = Database['public']['Tables']['ticket_photos']['Row'] & {
+  tickets?: { title: string; ticket_number: string };
+};
 
 interface CustomerDetailModalProps {
   customer: Customer;
@@ -35,11 +38,12 @@ interface CustomerDetailModalProps {
 export function CustomerDetailModal({ customer, onClose, onEdit, onDelete }: CustomerDetailModalProps) {
   const { profile } = useAuth();
   const isTechnician = profile?.role === 'technician';
-  const [activeTab, setActiveTab] = useState<'info' | 'equipment' | 'parts' | 'history' | 'financials'>('info');
+  const [activeTab, setActiveTab] = useState<'info' | 'equipment' | 'parts' | 'history' | 'financials' | 'images'>('info');
   const [tickets, setTickets] = useState<Ticket[]>([]);
   const [installedParts, setInstalledParts] = useState<InstalledPart[]>([]);
   const [installedEquipment, setInstalledEquipment] = useState<CustomerEquipmentByLocation[]>([]);
   const [financials, setFinancials] = useState<CustomerFinancialSummary | null>(null);
+  const [photos, setPhotos] = useState<TicketPhoto[]>([]);
   const [loading, setLoading] = useState(false);
 
   useEffect(() => {
@@ -51,6 +55,8 @@ export function CustomerDetailModal({ customer, onClose, onEdit, onDelete }: Cus
       loadInstalledEquipment();
     } else if (activeTab === 'financials') {
       loadFinancials();
+    } else if (activeTab === 'images') {
+      loadPhotos();
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [activeTab, customer.id]);
@@ -116,6 +122,49 @@ export function CustomerDetailModal({ customer, onClose, onEdit, onDelete }: Cus
     } finally {
       setLoading(false);
     }
+  };
+
+  const loadPhotos = async () => {
+    setLoading(true);
+    try {
+      const { data: ticketData, error: ticketError } = await supabase
+        .from('tickets')
+        .select('id')
+        .eq('customer_id', customer.id);
+
+      if (ticketError) throw ticketError;
+      const ticketIds = (ticketData ?? []).map((t) => t.id);
+
+      if (ticketIds.length === 0) {
+        setPhotos([]);
+        return;
+      }
+
+      const { data, error } = await supabase
+        .from('ticket_photos')
+        .select('*, tickets(title, ticket_number)')
+        .in('ticket_id', ticketIds)
+        .order('created_at', { ascending: false });
+
+      if (error) throw error;
+      setPhotos((data as TicketPhoto[]) ?? []);
+    } catch (error) {
+      console.error('Error loading photos:', error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const getPhotoBadge = (type: string | null) => {
+    const styles: Record<string, string> = {
+      before:    'bg-blue-100 text-blue-700 dark:bg-blue-900/40 dark:text-blue-300',
+      during:    'bg-yellow-100 text-yellow-700 dark:bg-yellow-900/40 dark:text-yellow-300',
+      after:     'bg-green-100 text-green-700 dark:bg-green-900/40 dark:text-green-300',
+      issue:     'bg-red-100 text-red-700 dark:bg-red-900/40 dark:text-red-300',
+      equipment: 'bg-gray-100 text-gray-700 dark:bg-gray-700 dark:text-gray-300',
+      other:     'bg-gray-100 text-gray-700 dark:bg-gray-700 dark:text-gray-300',
+    };
+    return styles[type ?? 'other'] ?? styles.other;
   };
 
   const getStatusBadge = (status: string) => {
@@ -211,6 +260,17 @@ export function CustomerDetailModal({ customer, onClose, onEdit, onDelete }: Cus
             >
               <Wrench className="w-3.5 h-3.5 md:w-4 md:h-4" />
               <span>History</span>
+            </button>
+            <button
+              onClick={() => setActiveTab('images')}
+              className={`py-1.5 px-2 md:py-2 md:px-3 font-medium text-xs md:text-sm transition-colors rounded-lg flex items-center space-x-1 ${
+                activeTab === 'images'
+                  ? 'bg-blue-100 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400'
+                  : 'text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-700'
+              }`}
+            >
+              <Image className="w-3.5 h-3.5 md:w-4 md:h-4" />
+              <span>Photos</span>
             </button>
             {!isTechnician && (
               <button
@@ -508,6 +568,64 @@ export function CustomerDetailModal({ customer, onClose, onEdit, onDelete }: Cus
                       </div>
                     </div>
                   ))}
+                </div>
+              )}
+            </div>
+          )}
+
+          {activeTab === 'images' && (
+            <div>
+              {loading ? (
+                <div className="flex items-center justify-center py-12">
+                  <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
+                </div>
+              ) : photos.length === 0 ? (
+                <div className="text-center py-12 text-gray-600 dark:text-gray-400">
+                  <Image className="w-12 h-12 mx-auto mb-3 opacity-50" />
+                  <p>No photos have been added to work orders for this customer yet.</p>
+                </div>
+              ) : (
+                <div>
+                  <p className="text-sm text-gray-500 dark:text-gray-400 mb-4">
+                    {photos.length} photo{photos.length !== 1 ? 's' : ''} across all work orders
+                  </p>
+                  <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
+                    {photos.map((photo) => (
+                      <div
+                        key={photo.id}
+                        className="group relative rounded-lg overflow-hidden border border-gray-200 dark:border-gray-700 cursor-pointer"
+                        onClick={() => window.open(photo.photo_url, '_blank')}
+                      >
+                        <div className="aspect-square bg-gray-100 dark:bg-gray-700">
+                          <img
+                            src={photo.photo_url}
+                            alt={photo.caption ?? `${photo.photo_type} photo`}
+                            className="w-full h-full object-cover group-hover:opacity-90 transition-opacity"
+                          />
+                        </div>
+                        <div className="p-2 bg-white dark:bg-gray-800">
+                          <div className="flex items-center justify-between mb-1">
+                            <span className={`text-xs font-medium px-1.5 py-0.5 rounded capitalize ${getPhotoBadge(photo.photo_type)}`}>
+                              {photo.photo_type ?? 'other'}
+                            </span>
+                            <span className="text-xs text-gray-400 dark:text-gray-500">
+                              {new Date(photo.created_at ?? '').toLocaleDateString()}
+                            </span>
+                          </div>
+                          {photo.tickets && (
+                            <p className="text-xs text-gray-500 dark:text-gray-400 truncate">
+                              #{photo.tickets.ticket_number} · {photo.tickets.title}
+                            </p>
+                          )}
+                          {photo.caption && (
+                            <p className="text-xs text-gray-600 dark:text-gray-300 mt-0.5 truncate">
+                              {photo.caption}
+                            </p>
+                          )}
+                        </div>
+                      </div>
+                    ))}
+                  </div>
                 </div>
               )}
             </div>
